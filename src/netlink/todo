@@ -1,15 +1,15 @@
 +------------------------+
 | 1️⃣ Création de la      |
-|    socket Netlink       |
-|    (NlSocketHandle)     |
+|    socket Netlink      |
+|    (NlRouter)          |
 +-----------+------------+
             |
             v
 +------------------------+
 | 2️⃣ Résolution de la    |
-|    famille GENL         |     -> family.rs
-|    BATADV (CTRL_CMD_*)  |
-|    -> family_id         |
+|    famille GENL        |     -> family.rs
+|    BATADV (CTRL_CMD_*) |
+|    -> family_id        |
 +-----------+------------+
             |
             v

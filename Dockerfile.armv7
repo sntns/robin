@@ -1,0 +1,11 @@
+# Utiliser l'image cross pour ARMv7
+FROM --platform=linux/amd64 ghcr.io/cross-rs/armv7-unknown-linux-gnueabihf:0.2.5
+
+# Ajouter l'architecture ARMhf pour les libs
+RUN dpkg --add-architecture armhf && \
+    apt-get update && \
+    apt-get install -y \
+        gcc-arm-linux-gnueabihf \
+        g++-arm-linux-gnueabihf \
+        libc6-dev:armhf \
+    && rm -rf /var/lib/apt/lists/*

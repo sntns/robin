@@ -3,9 +3,8 @@ use crate::error::RobinError;
 use crate::netlink::{AttrObject, AttrValue};
 
 use macaddr::MacAddr6;
-use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct Originator {
     /// originator MAC
     pub originator: MacAddr6,
@@ -26,9 +25,14 @@ impl Originator {
             .get(&(Attribute::BatadvAttrOrigAddress as u16))
             .ok_or_else(|| RobinError::Parse("Missing ORIG_ADDRESS".into()))?;
 
-        let mac_bytes = match mac_val {
-            AttrValue::Bytes(v) if v.len() >= 6 => &v[..6],
-            AttrValue::String(s) if s.len() == 6 => s.as_bytes(), // unlikely
+        let mac_bytes: [u8; 6] = match mac_val {
+            AttrValue::Bytes(v) if v.len() >= 6 => v[..6]
+                .try_into()
+                .map_err(|_| RobinError::Parse("Invalid ORIG_ADDRESS".into()))?,
+            AttrValue::String(s) if s.len() == 6 => s
+                .as_bytes()
+                .try_into()
+                .map_err(|_| RobinError::Parse("Invalid ORIG_ADDRESS".into()))?,
             _ => return Err(RobinError::Parse("Invalid ORIG_ADDRESS".into())),
         };
 
