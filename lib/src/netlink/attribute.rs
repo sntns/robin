@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 /// Selected BATADV attributes (from linux/uapi/batman_adv.h)
 #[repr(u16)]
 #[derive(Debug, Copy, Clone)]
@@ -46,3 +48,23 @@ impl From<Attribute> for u16 {
 // | BatadvAttrThroughput    | Throughput of a link/node                     | For performance stats                        |
 // | BatadvAttrRouter        | Indicates if node is a router                 | For routing decisions                        |
 // +------------------------+-----------------------------------------------+---------------------------------------------+
+
+#[derive(Debug, Clone)]
+pub enum AttrValue {
+    U8(u8),
+    U16(u16),
+    U32(u32),
+    Bytes(Vec<u8>),
+    String(String),
+    Nested(Vec<AttrObject>), // attribute set
+}
+
+pub type AttrObject = HashMap<u16, AttrValue>;
+
+pub enum AttrValueForSend {
+    U8(u8),
+    U16(u16),
+    U32(u32),
+    Bytes(Vec<u8>),
+    String(String),
+}

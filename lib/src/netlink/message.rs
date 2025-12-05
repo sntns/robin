@@ -1,24 +1,12 @@
 use crate::error::RobinError;
-use crate::{Attribute, Command};
-use std::collections::HashMap;
+use crate::netlink::{AttrObject, AttrValue, Attribute, Command};
 
 use neli::attr::AttrHandle;
 use neli::consts::nl::NlmF;
 use neli::genl::{Genlmsghdr, GenlmsghdrBuilder, Nlattr};
 use neli::nl::{NlPayload, Nlmsghdr, NlmsghdrBuilder};
 use neli::types::{Buffer, GenlBuffer};
-
-#[derive(Debug, Clone)]
-pub enum AttrValue {
-    U8(u8),
-    U16(u16),
-    U32(u32),
-    Bytes(Vec<u8>),
-    String(String),
-    Nested(Vec<AttrObject>), // attribute set
-}
-
-pub type AttrObject = HashMap<u16, AttrValue>;
+use std::collections::HashMap;
 
 #[derive(Debug, Copy, Clone)]
 pub enum ExpectedType {
@@ -57,23 +45,35 @@ fn get_attr_spec_map() -> HashMap<u16, ExpectedType> {
 //
 // NLA attributes :
 //  must contain BatadvAttrMeshIfname = "bat0\0"
-//  and can contain anything from attrs.rs which can be completed from
+//  and can contain anything from attribute which can be completed from
 //  usr/src/linux-headers-$(uname -r)/include/uapi/linux/batman_adv.h
-//  see attrs.rs for corresponding attrs in robin
+//  see attribute for corresponding attrs in robin
 
-/// Create a Netlink message for the given command with the given attributes
+/// Create a Netlink (Genl) message for the given command with the given attributes
 pub fn build_genl_msg(
-    family_id: u16,
     cmd: Command,
     attrs: GenlBuffer<u16, Buffer>,
-    seq: u32,
-) -> Result<Nlmsghdr<u16, Genlmsghdr<u8, u16>>, RobinError> {
+) -> Result<Genlmsghdr<u8, u16>, RobinError> {
     // Build GENL header with attributes
     let genl_msg = GenlmsghdrBuilder::default()
         .cmd(cmd.into())
         .version(1)
         .attrs(attrs)
         .build()
+        .map_err(|e| RobinError::Netlink(format!("Failed to build GENL header: {:?}", e)))?;
+
+    Ok(genl_msg)
+}
+
+/// Create a Netlink (Nl) message for the given command with the given attributes
+pub fn build_nl_msg(
+    family_id: u16,
+    cmd: Command,
+    attrs: GenlBuffer<u16, Buffer>,
+    seq: u32,
+) -> Result<Nlmsghdr<u16, Genlmsghdr<u8, u16>>, RobinError> {
+    // Build GENL header with attributes
+    let genl_msg = build_genl_msg(cmd, attrs)
         .map_err(|e| RobinError::Netlink(format!("Failed to build GENL header: {:?}", e)))?;
 
     // Build Netlink header with payload
@@ -89,9 +89,9 @@ pub fn build_genl_msg(
     Ok(nl_msg)
 }
 
-/// Generic parse: turns a Netlink GENL message into a Vec<AttrObject>
+/// Generic parse: turns a Netlink NL message into a Vec<AttrObject>
 /// Each AttrObject represents an "entity" (originator, neighbor, ...).
-pub fn parse_genl_msg(
+pub fn parse_nl_msg(
     nlmsg: &Nlmsghdr<u16, Genlmsghdr<u8, u16>>,
 ) -> Result<Vec<AttrObject>, RobinError> {
     let mut out = Vec::new();

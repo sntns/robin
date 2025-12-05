@@ -66,3 +66,5 @@
 |    - Parcourt Nlattr(s)  |
 |    -> Extract Originator entries|
 +------------------------+
+
+// TODO: maybe move attribute.rs and command.rs to model/

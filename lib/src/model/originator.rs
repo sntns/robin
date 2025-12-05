@@ -1,5 +1,5 @@
-use crate::Attribute;
 use crate::error::RobinError;
+use crate::netlink::Attribute;
 use crate::netlink::{AttrObject, AttrValue};
 
 use macaddr::MacAddr6;
@@ -19,7 +19,7 @@ pub struct Originator {
 }
 
 impl Originator {
-    pub fn try_from_attr_object(obj: &AttrObject) -> Result<Self, RobinError> {
+    pub(crate) fn try_from_attr_object(obj: &AttrObject) -> Result<Self, RobinError> {
         // ORIG_ADDRESS mandatory
         let mac_val = obj
             .get(&(Attribute::BatadvAttrOrigAddress as u16))
