@@ -8,6 +8,7 @@ name = "robin"
 path = "src/lib.rs"
 
 [dependencies]
-neli = "0.7"
+neli = { version = "0.7", features = ["async"] }
 thiserror = "2.0.17"
 macaddr = "1"
+libc = "0.2.178"

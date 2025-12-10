@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 robin-lib = { path = "../lib" }
 clap = { version = "4.5.32", features = ["cargo", "derive", "env"] }
+tokio = { version = "1.48.0", features = ["rt", "rt-multi-thread", "macros"] }

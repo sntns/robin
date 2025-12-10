@@ -4,7 +4,7 @@ use neli::consts::nl::NlmF;
 use neli::consts::socket::NlFamily;
 use neli::genl::Genlmsghdr;
 use neli::nl::NlPayload;
-use neli::router::synchronous::{NlRouter, NlRouterReceiverHandle};
+use neli::router::asynchronous::{NlRouter, NlRouterReceiverHandle};
 use neli::utils::Groups;
 
 pub struct BatadvSocket {
@@ -13,19 +13,21 @@ pub struct BatadvSocket {
 }
 
 impl BatadvSocket {
-    pub fn connect() -> Result<Self, RobinError> {
-        let (sock, _mcast) =
-            NlRouter::connect(NlFamily::Generic, None, Groups::empty()).map_err(|e| {
+    pub async fn connect() -> Result<Self, RobinError> {
+        let (sock, _mcast) = NlRouter::connect(NlFamily::Generic, None, Groups::empty())
+            .await
+            .map_err(|e| {
                 RobinError::Netlink(format!("Failed to connect with NlRouter: {:?}", e))
             })?;
         let family_id = sock
             .resolve_genl_family("batadv")
+            .await
             .map_err(|e| RobinError::Netlink(format!("Failed to resolve family: {:?}", e)))?;
 
         Ok(Self { sock, family_id })
     }
 
-    pub fn send(
+    pub async fn send(
         &mut self,
         flags: NlmF,
         msg: Genlmsghdr<u8, u16>,
@@ -33,6 +35,7 @@ impl BatadvSocket {
         let recv = self
             .sock
             .send(self.family_id, flags, NlPayload::Payload(msg))
+            .await
             .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
 
         Ok(recv)

@@ -9,17 +9,19 @@ impl RobinClient {
         Self {}
     }
 
-    pub fn originators(&self) -> Result<Vec<model::Originator>, RobinError> {
-        commands::get_originators()
+    pub async fn originators(&self) -> Result<Vec<model::Originator>, RobinError> {
+        commands::get_originators().await
     }
 
-    /*pub fn neighbors(&self) -> Result<Vec<Neighbor>, RobinError> {
-        commands::get_neighbors()
+    pub async fn gateways(&self) -> Result<Vec<model::Gateway>, RobinError> {
+        commands::get_gateways_list().await
     }
 
-    pub fn gateways(&self) -> Result<Vec<Gateway>, RobinError> {
-        commands::get_gateways()
-    }*/
+    pub async fn gateway(&self) -> Result<model::GatewayInfo, RobinError> {
+        commands::get_gateway().await
+    }
+
+    // TODO: add batctl tg and if
 
     // ...
 }

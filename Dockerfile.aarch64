@@ -1,0 +1,11 @@
+# Utiliser l'image cross officielle pour AArch64
+FROM --platform=linux/amd64 ghcr.io/cross-rs/aarch64-unknown-linux-gnu:0.2.5
+
+# Ajouter les libs AArch64 (ARM64)
+RUN dpkg --add-architecture arm64 && \
+    apt-get update && \
+    apt-get install -y \
+        gcc-aarch64-linux-gnu \
+        g++-aarch64-linux-gnu \
+        libc6-dev:arm64 \
+    && rm -rf /var/lib/apt/lists/*

@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
-/// Selected BATADV attributes (from linux/uapi/batman_adv.h)
+/// BATADV netlink attributes (from linux/uapi/batman_adv.h)
 #[repr(u16)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Attribute {
     BatadvAttrUnspec = 0,
     BatadvAttrVersion = 1,
@@ -14,13 +12,57 @@ pub enum Attribute {
     BatadvAttrHardIfname = 7,
     BatadvAttrHardAddress = 8,
     BatadvAttrOrigAddress = 9,
-    // ...
-    BatadvAttrLastSeenMsecs = 24,
-    BatadvAttrNeighAddress = 25,
-    BatadvAttrTq = 26,
-    BatadvAttrThroughput = 27,
-    BatadvAttrRouter = 30,
-    // ... add needed attributes
+    BatadvAttrTpMeterResult = 10,
+    BatadvAttrTpMeterTestTime = 11,
+    BatadvAttrTpMeterBytes = 12,
+    BatadvAttrTpMeterCookie = 13,
+    BatadvAttrPad = 14,
+    BatadvAttrActive = 15,
+    BatadvAttrTtAddress = 16,
+    BatadvAttrTtTtvn = 17,
+    BatadvAttrTtLastTtvn = 18,
+    BatadvAttrTtCrc32 = 19,
+    BatadvAttrTtVid = 20,
+    BatadvAttrTtFlags = 21,
+    BatadvAttrFlagBest = 22,
+    BatadvAttrLastSeenMsecs = 23,
+    BatadvAttrNeighAddress = 24,
+    BatadvAttrTq = 25,
+    BatadvAttrThroughput = 26,
+    BatadvAttrBandwidthUp = 27,
+    BatadvAttrBandwidthDown = 28,
+    BatadvAttrRouter = 29,
+    BatadvAttrBlaOwn = 30,
+    BatadvAttrBlaAddress = 31,
+    BatadvAttrBlaVid = 32,
+    BatadvAttrBlaBackbone = 33,
+    BatadvAttrBlaCrc = 34,
+    BatadvAttrDatCacheIp4Address = 35,
+    BatadvAttrDatCacheHwAddress = 36,
+    BatadvAttrDatCacheVid = 37,
+    BatadvAttrMcastFlags = 38,
+    BatadvAttrMcastFlagsPriv = 39,
+    BatadvAttrVlanId = 40,
+    BatadvAttrAggregatedOgmsEnabled = 41,
+    BatadvAttrApIsolationEnabled = 42,
+    BatadvAttrIsolationMark = 43,
+    BatadvAttrIsolationMask = 44,
+    BatadvAttrBondingEnabled = 45,
+    BatadvAttrBridgeLoopAvoidanceEnabled = 46,
+    BatadvAttrDistributedArpTableEnabled = 47,
+    BatadvAttrFragmentationEnabled = 48,
+    BatadvAttrGwBandwidthDown = 49,
+    BatadvAttrGwBandwidthUp = 50,
+    BatadvAttrGwMode = 51,
+    BatadvAttrGwSelClass = 52,
+    BatadvAttrHopPenalty = 53,
+    BatadvAttrLogLevel = 54,
+    BatadvAttrMulticastForceFloodEnabled = 55,
+    BatadvAttrNetworkCodingEnabled = 56,
+    BatadvAttrOrigInterval = 57,
+    BatadvAttrElpInterval = 58,
+    BatadvAttrThroughputOverride = 59,
+    BatadvAttrMulticastFanout = 60,
 }
 
 impl From<Attribute> for u16 {
@@ -29,27 +71,7 @@ impl From<Attribute> for u16 {
     }
 }
 
-// +------------------------+-----------------------------------------------+---------------------------------------------+
-// | Attribute              | Description                                   | When to use                                 |
-// +------------------------+-----------------------------------------------+---------------------------------------------+
-// | BatadvAttrUnspec        | Unspecified / unused                         | Never used                                  |
-// | BatadvAttrVersion       | Batman-adv protocol version                  | When querying mesh information              |
-// | BatadvAttrAlgoName      | Routing algorithm name                        | When querying routing info                  |
-// | BatadvAttrMeshIfindex   | Index of the mesh interface                   | Specify mesh interface in requests          |
-// | BatadvAttrMeshIfname    | Name of the mesh interface                    | Specify mesh interface in requests          |
-// | BatadvAttrMeshAddress   | MAC address of the mesh interface             | Identify mesh interface                     |
-// | BatadvAttrHardIfindex   | Index of the physical interface               | When querying underlying hardware           |
-// | BatadvAttrHardIfname    | Name of the physical interface                | When querying underlying hardware           |
-// | BatadvAttrHardAddress   | MAC of the physical interface                 | Identify hardware interface                 |
-// | BatadvAttrOrigAddress   | MAC address of an originator node             | When listing originators                     |
-// | BatadvAttrLastSeenMsecs | Last seen timestamp of a node (ms)            | Know freshness of originator info           |
-// | BatadvAttrNeighAddress  | MAC address of a neighbor                     | For neighbor information                     |
-// | BatadvAttrTq            | Link quality metric (TQ)                      | For routing or debugging                     |
-// | BatadvAttrThroughput    | Throughput of a link/node                     | For performance stats                        |
-// | BatadvAttrRouter        | Indicates if node is a router                 | For routing decisions                        |
-// +------------------------+-----------------------------------------------+---------------------------------------------+
-
-#[derive(Debug, Clone)]
+/*#[derive(Debug, Clone)]
 pub enum AttrValue {
     U8(u8),
     U16(u16),
@@ -59,7 +81,7 @@ pub enum AttrValue {
     Nested(Vec<AttrObject>), // attribute set
 }
 
-pub type AttrObject = HashMap<u16, AttrValue>;
+pub type AttrObject = HashMap<u16, AttrValue>;*/
 
 pub enum AttrValueForSend {
     U8(u8),

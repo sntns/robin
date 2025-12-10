@@ -1,14 +1,12 @@
 use crate::error::RobinError;
-use crate::netlink::{AttrObject, AttrValue, Attribute, Command};
+use crate::netlink::{/*AttrObject, AttrValue, Attribute,*/ Command};
 
-use neli::attr::AttrHandle;
 use neli::consts::nl::NlmF;
-use neli::genl::{Genlmsghdr, GenlmsghdrBuilder, Nlattr};
+use neli::genl::{Genlmsghdr, GenlmsghdrBuilder};
 use neli::nl::{NlPayload, Nlmsghdr, NlmsghdrBuilder};
 use neli::types::{Buffer, GenlBuffer};
-use std::collections::HashMap;
 
-#[derive(Debug, Copy, Clone)]
+/*#[derive(Debug, Copy, Clone)]
 pub enum ExpectedType {
     U8,
     U16,
@@ -16,9 +14,9 @@ pub enum ExpectedType {
     String,
     Bytes,
     Nested,
-}
+}*/
 
-/// Spec mapping attribute id -> expected type
+/*/// Spec mapping attribute id -> expected type
 /// Extend this map from linux/uapi/batman_adv.h as needed.
 fn get_attr_spec_map() -> HashMap<u16, ExpectedType> {
     let mut m = HashMap::new();
@@ -30,7 +28,7 @@ fn get_attr_spec_map() -> HashMap<u16, ExpectedType> {
     m.insert(Attribute::BatadvAttrMeshIfname.into(), ExpectedType::String);
     // add more as needed...
     m
-}
+}*/
 
 // Netlink message structure :
 // Header Netlink (Nlmsghdr)
@@ -89,7 +87,7 @@ pub fn build_nl_msg(
     Ok(nl_msg)
 }
 
-/// Generic parse: turns a Netlink NL message into a Vec<AttrObject>
+/*/// Generic parse: turns a Netlink NL message into a Vec<AttrObject>
 /// Each AttrObject represents an "entity" (originator, neighbor, ...).
 pub fn parse_nl_msg(
     nlmsg: &Nlmsghdr<u16, Genlmsghdr<u8, u16>>,
@@ -314,7 +312,7 @@ mod tests {
 
         let o = Originator::try_from_attr_object(&obj).expect("originator parse");
         assert_eq!(
-            o.originator,
+            o.mac_addr,
             MacAddr6::new(0x02, 0xaa, 0xbb, 0xcc, 0xdd, 0xee)
         );
         assert_eq!(o.last_seen_ms, Some(420));
@@ -379,4 +377,4 @@ mod tests {
             _ => panic!("Expected u32 from heuristic"),
         }
     }
-}
+}*/

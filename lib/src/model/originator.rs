@@ -1,24 +1,17 @@
-use crate::error::RobinError;
-use crate::netlink::Attribute;
-use crate::netlink::{AttrObject, AttrValue};
-
 use macaddr::MacAddr6;
 
 #[derive(Debug, Clone)]
 pub struct Originator {
-    /// originator MAC
-    pub originator: MacAddr6,
-    /// last seen in milliseconds
-    pub last_seen_ms: Option<u32>,
-    /// TQ (aggregated)
-    pub tq: Option<u8>,
-    /// estimated throughput if present (bytes per second or per header semantics)
-    pub throughput: Option<u32>,
-    /// is gateway/router (if attribute present)
-    pub is_router: bool,
+    pub mac_addr: MacAddr6,      // BATADV_ATTR_ORIG_ADDRESS
+    pub next_hop: MacAddr6,      // BATADV_ATTR_NEIGH_ADDRESS
+    pub outgoing_if: String,     // BATADV_ATTR_HARD_IFNAME or ifindex
+    pub last_seen_ms: u32,       // BATADV_ATTR_LAST_SEEN_MSECS
+    pub tq: Option<u8>,          // BATADV_ATTR_TQ
+    pub throughput: Option<u32>, // BATADV_ATTR_THROUGHPUT
+    pub is_best: bool,           // BATADV_ATTR_ROUTER
 }
 
-impl Originator {
+/*impl Originator {
     pub(crate) fn try_from_attr_object(obj: &AttrObject) -> Result<Self, RobinError> {
         // ORIG_ADDRESS mandatory
         let mac_val = obj
@@ -69,11 +62,11 @@ impl Originator {
         let is_router = obj.contains_key(&(Attribute::BatadvAttrRouter as u16));
 
         Ok(Originator {
-            originator: mac,
+            mac_addr: mac,
             last_seen_ms: last_seen,
             tq,
             throughput,
             is_router,
         })
     }
-}
+}*/
