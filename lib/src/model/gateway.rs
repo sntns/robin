@@ -14,11 +14,11 @@ pub struct Gateway {
 
 #[derive(Debug)]
 pub struct GatewayInfo {
-    pub mode: GwMode,                // BATADV_ATTR_GW_MODE
-    pub sel_class: Option<u32>,      // BATADV_ATTR_GW_SEL_CLASS
-    pub bandwidth_down: Option<u32>, // BATADV_ATTR_GW_BANDWIDTH_DOWN
-    pub bandwidth_up: Option<u32>,   // BATADV_ATTR_GW_BANDWIDTH_UP
-    pub algo: Option<String>,        // BATADV_ATTR_ALGO_NAME
+    pub mode: GwMode,         // BATADV_ATTR_GW_MODE
+    pub sel_class: u32,       // BATADV_ATTR_GW_SEL_CLASS
+    pub bandwidth_down: u32,  // BATADV_ATTR_GW_BANDWIDTH_DOWN
+    pub bandwidth_up: u32,    // BATADV_ATTR_GW_BANDWIDTH_UP
+    pub algo: Option<String>, // BATADV_ATTR_ALGO_NAME
 }
 
 #[derive(Debug)]

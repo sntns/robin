@@ -3,25 +3,31 @@ use crate::model::Originator;
 use crate::netlink;
 use macaddr::MacAddr6;
 use neli::consts::nl::NlmF;
+use neli::consts::nl::Nlmsg;
 use neli::genl::Genlmsghdr;
+use neli::nl::NlPayload;
 use neli::nl::Nlmsghdr;
 
 /// Originators (batctl o)
 pub async fn get_originators() -> Result<Vec<Originator>, RobinError> {
     // Create the value and the attribute
     let mut attrs = netlink::GenlAttrBuilder::new();
-    let value = netlink::AttrValueForSend::Bytes("bat0\0".as_bytes().to_vec());
+    let ifindex = netlink::ifname_to_index("bat0")
+        .await
+        .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
+
     attrs
-        .add(netlink::Attribute::BatadvAttrMeshIfname, value)
-        .map_err(|e| RobinError::Netlink(format!("Failed to add GENL attribute: {:?}", e)))?;
+        .add(
+            netlink::Attribute::BatadvAttrMeshIfindex,
+            netlink::AttrValueForSend::U32(ifindex),
+        )
+        .map_err(|e| {
+            RobinError::Netlink(format!("Failed to add MeshIfIndex attribute: {:?}", e))
+        })?;
 
     // Build the message
-    let msg = netlink::build_genl_msg(
-        //family_id,
-        netlink::Command::BatadvCmdGetOriginators,
-        attrs.build(),
-        //socket.next_seq(),
-    )?;
+    let msg = netlink::build_genl_msg(netlink::Command::BatadvCmdGetOriginators, attrs.build())
+        .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
 
     // Connect to socket
     let mut socket = netlink::BatadvSocket::connect()
@@ -40,6 +46,30 @@ pub async fn get_originators() -> Result<Vec<Originator>, RobinError> {
         let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> =
             msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
 
+        if *msg.nl_type() == Nlmsg::Done.into() {
+            // End of message
+            break;
+        }
+
+        if *msg.nl_type() == Nlmsg::Error.into() {
+            match &msg.nl_payload() {
+                NlPayload::Err(err) => {
+                    if *err.error() == 0 {
+                        // Not a real error, indicates end of dump
+                        break;
+                    } else {
+                        return Err(RobinError::Netlink(format!(
+                            "netlink error {}",
+                            err.error()
+                        )));
+                    }
+                }
+                _ => {
+                    return Err(RobinError::Netlink("unknown netlink error payload".into()));
+                }
+            }
+        }
+
         // handle of all top-level attributes
         let attrs = msg
             .get_payload()
@@ -57,9 +87,9 @@ pub async fn get_originators() -> Result<Vec<Originator>, RobinError> {
             .map_err(|e| RobinError::Parse(format!("Missing NEIGH_ADDRESS: {:?}", e)))?;
 
         // HARD_IFNAME or fallback to HARD_IFINDEX
-        let ifname = match attrs.get_attr_payload_as::<[u8; libc::IFNAMSIZ]>(
-            netlink::Attribute::BatadvAttrHardIfname.into(),
-        ) {
+        let ifname = match attrs
+            .get_attr_payload_as::<[u8; 16]>(netlink::Attribute::BatadvAttrHardIfname.into())
+        {
             Ok(bytes) => {
                 let nul_pos = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
                 String::from_utf8_lossy(&bytes[..nul_pos]).into_owned()
@@ -68,7 +98,7 @@ pub async fn get_originators() -> Result<Vec<Originator>, RobinError> {
                 let ifindex = attrs
                     .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrHardIfindex.into())
                     .map_err(|e| RobinError::Parse(format!("Missing HARD_IFINDEX: {:?}", e)))?;
-                netlink::get_ifname_from_index(ifindex).map_err(|e| {
+                netlink::ifindex_to_name(ifindex).await.map_err(|e| {
                     RobinError::Netlink(format!("Failed to get ifname from ifindex: {:?}", e))
                 })?
             }
@@ -95,20 +125,8 @@ pub async fn get_originators() -> Result<Vec<Originator>, RobinError> {
                 Err(_) => false,
             };
 
-        // Debug output similar to batctl
-        println!(
-            "{} {:02x?} via {:02x?} on {}  last_seen={}ms tq={:?} tp={:?}",
-            if is_best { "*" } else { " " },
-            orig,
-            neigh,
-            ifname,
-            last_seen_ms,
-            tq,
-            tp
-        );
-
         originators.push(Originator {
-            mac_addr: MacAddr6::from(orig),
+            originator: MacAddr6::from(orig),
             next_hop: MacAddr6::from(neigh),
             outgoing_if: ifname,
             last_seen_ms,

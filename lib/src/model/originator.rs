@@ -2,7 +2,7 @@ use macaddr::MacAddr6;
 
 #[derive(Debug, Clone)]
 pub struct Originator {
-    pub mac_addr: MacAddr6,      // BATADV_ATTR_ORIG_ADDRESS
+    pub originator: MacAddr6,    // BATADV_ATTR_ORIG_ADDRESS
     pub next_hop: MacAddr6,      // BATADV_ATTR_NEIGH_ADDRESS
     pub outgoing_if: String,     // BATADV_ATTR_HARD_IFNAME or ifindex
     pub last_seen_ms: u32,       // BATADV_ATTR_LAST_SEEN_MSECS

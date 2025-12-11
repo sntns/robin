@@ -2,19 +2,28 @@ use crate::error::RobinError;
 use crate::model::{Gateway, GatewayInfo, GwMode};
 use crate::netlink;
 use macaddr::MacAddr6;
-use neli::consts::nl::NlmF;
+use neli::consts::nl::{NlmF, Nlmsg};
 use neli::genl::Genlmsghdr;
-use neli::nl::Nlmsghdr;
+use neli::nl::{NlPayload, Nlmsghdr};
 
 /// Gateways list (batctl gwl)
 pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
-    let value = netlink::AttrValueForSend::Bytes("bat0\0".as_bytes().to_vec());
-    attrs
-        .add(netlink::Attribute::BatadvAttrMeshIfname, value)
-        .map_err(|e| RobinError::Netlink(format!("Failed to add GENL attribute: {:?}", e)))?;
+    let ifindex = netlink::ifname_to_index("bat0")
+        .await
+        .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
 
-    let msg = netlink::build_genl_msg(netlink::Command::BatadvCmdGetGateways, attrs.build())?;
+    attrs
+        .add(
+            netlink::Attribute::BatadvAttrMeshIfindex,
+            netlink::AttrValueForSend::U32(ifindex),
+        )
+        .map_err(|e| {
+            RobinError::Netlink(format!("Failed to add MeshIfIndex attribute: {:?}", e))
+        })?;
+
+    let msg = netlink::build_genl_msg(netlink::Command::BatadvCmdGetGateways, attrs.build())
+        .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
 
     let mut socket = netlink::BatadvSocket::connect()
         .await
@@ -30,6 +39,28 @@ pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
     while let Some(msg) = response.next().await {
         let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> =
             msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
+
+        if *msg.nl_type() == Nlmsg::Done.into() {
+            break;
+        }
+
+        if *msg.nl_type() == Nlmsg::Error.into() {
+            match &msg.nl_payload() {
+                NlPayload::Err(err) => {
+                    if *err.error() == 0 {
+                        break;
+                    } else {
+                        return Err(RobinError::Netlink(format!(
+                            "netlink error {}",
+                            err.error()
+                        )));
+                    }
+                }
+                _ => {
+                    return Err(RobinError::Netlink("unknown netlink error payload".into()));
+                }
+            }
+        }
 
         let attrs = msg
             .get_payload()
@@ -50,9 +81,9 @@ pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
             .get_attr_payload_as::<[u8; 6]>(netlink::Attribute::BatadvAttrRouter.into())
             .map_err(|e| RobinError::Parse(format!("Missing ROUTER: {:?}", e)))?;
 
-        let outgoing_if = match attrs.get_attr_payload_as::<[u8; libc::IFNAMSIZ]>(
-            netlink::Attribute::BatadvAttrHardIfname.into(),
-        ) {
+        let outgoing_if = match attrs
+            .get_attr_payload_as::<[u8; 16]>(netlink::Attribute::BatadvAttrHardIfname.into())
+        {
             Ok(bytes) => {
                 let nul_pos = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
                 String::from_utf8_lossy(&bytes[..nul_pos]).into_owned()
@@ -61,7 +92,7 @@ pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
                 let ifindex = attrs
                     .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrHardIfindex.into())
                     .map_err(|e| RobinError::Parse(format!("Missing HARD_IFINDEX: {:?}", e)))?;
-                netlink::get_ifname_from_index(ifindex).map_err(|e| {
+                netlink::ifindex_to_name(ifindex).await.map_err(|e| {
                     RobinError::Netlink(format!("Failed to get ifname from ifindex: {:?}", e))
                 })?
             }
@@ -97,12 +128,19 @@ pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
 
 /// Get gateway (batctl gw)
 pub async fn get_gateway() -> Result<GatewayInfo, RobinError> {
-    // Build the netlink message
     let mut attrs = netlink::GenlAttrBuilder::new();
-    let value = netlink::AttrValueForSend::Bytes("bat0\0".as_bytes().to_vec());
+    let ifindex = netlink::ifname_to_index("bat0")
+        .await
+        .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
+
     attrs
-        .add(netlink::Attribute::BatadvAttrMeshIfname, value)
-        .map_err(|e| RobinError::Netlink(format!("Failed to add GENL attribute: {:?}", e)))?;
+        .add(
+            netlink::Attribute::BatadvAttrMeshIfindex,
+            netlink::AttrValueForSend::U32(ifindex),
+        )
+        .map_err(|e| {
+            RobinError::Netlink(format!("Failed to add MeshIfIndex attribute: {:?}", e))
+        })?;
 
     let msg = netlink::build_genl_msg(netlink::Command::BatadvCmdGetMesh, attrs.build())?;
 
@@ -115,7 +153,6 @@ pub async fn get_gateway() -> Result<GatewayInfo, RobinError> {
         .await
         .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
 
-    // There should be one response message
     let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> = response
         .next()
         .await
@@ -138,15 +175,15 @@ pub async fn get_gateway() -> Result<GatewayInfo, RobinError> {
 
     let sel_class = attrs
         .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrGwSelClass.into())
-        .ok();
+        .map_err(|e| RobinError::Parse(format!("Missing GW_SEL_CLASS: {:?}", e)))?;
 
     let bandwidth_down = attrs
-        .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrBandwidthDown.into())
-        .ok();
+        .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrGwBandwidthDown.into())
+        .map_err(|e| RobinError::Parse(format!("Missing GW_BANDWIDTH_DOWN: {:?}", e)))?;
 
     let bandwidth_up = attrs
-        .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrBandwidthUp.into())
-        .ok();
+        .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrGwBandwidthUp.into())
+        .map_err(|e| RobinError::Parse(format!("Missing GW_BANDWIDTH_UP: {:?}", e)))?;
 
     let algo = attrs
         .get_attr_payload_as::<[u8; 32]>(netlink::Attribute::BatadvAttrAlgoName.into())

@@ -21,7 +21,5 @@ impl RobinClient {
         commands::get_gateway().await
     }
 
-    // TODO: add batctl tg and if
-
     // ...
 }
