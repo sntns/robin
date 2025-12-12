@@ -17,8 +17,30 @@ impl RobinClient {
         commands::get_gateways_list().await
     }
 
-    pub async fn gateway(&self) -> Result<model::GatewayInfo, RobinError> {
+    pub async fn get_gw_mode(&self) -> Result<model::GatewayInfo, RobinError> {
         commands::get_gateway().await
+    }
+
+    pub async fn set_gw_mode(
+        &self,
+        mode: model::GwMode,
+        down: Option<u32>,
+        up: Option<u32>,
+        sel_class: Option<u32>,
+    ) -> Result<(), RobinError> {
+        commands::set_gateway(mode, down, up, sel_class).await
+    }
+
+    pub async fn transglobal(&self) -> Result<Vec<model::TransglobalEntry>, RobinError> {
+        commands::get_transglobal().await
+    }
+
+    pub async fn translocal(&self) -> Result<Vec<model::TranslocalEntry>, RobinError> {
+        commands::get_translocal().await
+    }
+
+    pub async fn neighbors(&self) -> Result<Vec<model::Neighbor>, RobinError> {
+        commands::get_neighbors().await
     }
 
     // ...

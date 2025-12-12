@@ -1,0 +1,8 @@
+To do :
+if (interface.c)
+start CLI and format output properly according to batctl source code
+
+To test :
+tg (transglobal.c)
+tl (translocal.c)
+n (neighbors.c)

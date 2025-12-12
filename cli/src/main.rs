@@ -1,14 +1,11 @@
 use robin;
 
-// TODO: add batctl tg and if
-// TODO: refactor code to have less duplicates
-
 #[tokio::main]
 async fn main() {
     let client = robin::RobinClient::new();
     let orig = client.originators().await.unwrap();
     let gateways = client.gateways().await.unwrap();
-    let gateway_mode = client.gateway().await.unwrap();
+    let gateway_mode = client.get_gw_mode().await.unwrap();
 
     println!("   Originator        last-seen (#/255) Nexthop           [outgoingIF]");
     for o in orig {

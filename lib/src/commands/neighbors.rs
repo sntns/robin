@@ -1,17 +1,17 @@
 use crate::error::RobinError;
-use crate::model::Gateway;
+use crate::model::Neighbor;
 use crate::netlink;
 use macaddr::MacAddr6;
 use neli::consts::nl::{NlmF, Nlmsg};
 use neli::genl::Genlmsghdr;
 use neli::nl::{NlPayload, Nlmsghdr};
 
-/// Gateways list (batctl gwl)
-pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
+/// Neighbors (batctl n)
+pub async fn get_neighbors() -> Result<Vec<Neighbor>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
     let ifindex = netlink::ifname_to_index("bat0")
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
+        .map_err(|e| RobinError::Netlink(format!("Failed to get ifindex for bat0: {:?}", e)))?;
 
     attrs
         .add(
@@ -19,28 +19,28 @@ pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
             netlink::AttrValueForSend::U32(ifindex),
         )
         .map_err(|e| {
-            RobinError::Netlink(format!("Failed to add MeshIfIndex attribute: {:?}", e))
+            RobinError::Netlink(format!("Failed to add MeshIfindex attribute: {:?}", e))
         })?;
 
-    let msg = netlink::build_genl_msg(netlink::Command::BatadvCmdGetGateways, attrs.build())
+    let msg = netlink::build_genl_msg(netlink::Command::BatadvCmdGetOriginators, attrs.build())
         .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
 
-    let mut socket = netlink::BatadvSocket::connect()
+    let mut sock = netlink::BatadvSocket::connect()
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to connect to socket: {:?}", e)))?;
+        .map_err(|e| RobinError::Netlink(format!("Failed to connect socket: {:?}", e)))?;
 
-    let mut response = socket
+    let mut response = sock
         .send(NlmF::REQUEST | NlmF::DUMP, msg)
         .await
         .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
 
-    let mut gateways = Vec::new();
-
+    let mut neighbors: Vec<Neighbor> = Vec::new();
     while let Some(msg) = response.next().await {
         let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> =
             msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
 
         if *msg.nl_type() == Nlmsg::Done.into() {
+            // End of message
             break;
         }
 
@@ -48,6 +48,7 @@ pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
             match &msg.nl_payload() {
                 NlPayload::Err(err) => {
                     if *err.error() == 0 {
+                        // Not a real error, indicates end of dump
                         break;
                     } else {
                         return Err(RobinError::Netlink(format!(
@@ -68,18 +69,13 @@ pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
             .attrs()
             .get_attr_handle();
 
-        let is_best = attrs
-            .get_attr_payload_as::<u8>(netlink::Attribute::BatadvAttrFlagBest.into())
-            .map(|_| true)
-            .unwrap_or(false);
+        let neigh_addr = attrs
+            .get_attr_payload_as::<[u8; 6]>(netlink::Attribute::BatadvAttrNeighAddress.into())
+            .map_err(|e| RobinError::Parse(format!("Missing NEIGH_ADDRESS: {:?}", e)))?;
 
-        let mac_addr = attrs
-            .get_attr_payload_as::<[u8; 6]>(netlink::Attribute::BatadvAttrOrigAddress.into())
-            .map_err(|e| RobinError::Parse(format!("Missing ORIG_ADDRESS: {:?}", e)))?;
-
-        let router = attrs
-            .get_attr_payload_as::<[u8; 6]>(netlink::Attribute::BatadvAttrRouter.into())
-            .map_err(|e| RobinError::Parse(format!("Missing ROUTER: {:?}", e)))?;
+        let last_seen_ms = attrs
+            .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrLastSeenMsecs.into())
+            .map_err(|e| RobinError::Parse(format!("Missing LAST_SEEN_MSECS: {:?}", e)))?;
 
         let outgoing_if = match attrs
             .get_attr_payload_as::<[u8; 16]>(netlink::Attribute::BatadvAttrHardIfname.into())
@@ -93,35 +89,23 @@ pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
                     .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrHardIfindex.into())
                     .map_err(|e| RobinError::Parse(format!("Missing HARD_IFINDEX: {:?}", e)))?;
                 netlink::ifindex_to_name(ifindex).await.map_err(|e| {
-                    RobinError::Netlink(format!("Failed to get ifname from ifindex: {:?}", e))
+                    RobinError::Netlink(format!("Failed to resolve ifindex -> name: {:?}", e))
                 })?
             }
         };
 
-        let bandwidth_down = attrs
-            .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrBandwidthDown.into())
-            .ok();
-        let bandwidth_up = attrs
-            .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrBandwidthUp.into())
-            .ok();
-        let throughput = attrs
+        let throughput_kbps = attrs
             .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrThroughput.into())
             .ok();
-        let tq = attrs
-            .get_attr_payload_as::<u8>(netlink::Attribute::BatadvAttrTq.into())
-            .ok();
 
-        gateways.push(Gateway {
-            mac_addr: MacAddr6::from(mac_addr),
-            router: MacAddr6::from(router),
+        // push entry
+        neighbors.push(Neighbor {
+            neigh: MacAddr6::from(neigh_addr),
             outgoing_if,
-            bandwidth_down,
-            bandwidth_up,
-            throughput,
-            tq,
-            is_best,
+            last_seen_ms,
+            throughput_kbps,
         });
     }
 
-    Ok(gateways)
+    Ok(neighbors)
 }
