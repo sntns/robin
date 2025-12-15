@@ -13,6 +13,10 @@ impl RobinClient {
         commands::get_originators().await
     }
 
+    pub async fn algo_name(&self) -> Result<String, RobinError> {
+        commands::get_algo_name().await
+    }
+
     pub async fn gateways(&self) -> Result<Vec<model::Gateway>, RobinError> {
         commands::get_gateways_list().await
     }

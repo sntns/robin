@@ -140,3 +140,53 @@ pub async fn get_originators() -> Result<Vec<Originator>, RobinError> {
 
     Ok(originators)
 }
+
+/// Utils function to get algo name
+pub async fn get_algo_name() -> Result<String, RobinError> {
+    let mut attrs = netlink::GenlAttrBuilder::new();
+    let ifindex = netlink::ifname_to_index("bat0")
+        .await
+        .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
+
+    attrs
+        .add(
+            netlink::Attribute::BatadvAttrMeshIfindex,
+            netlink::AttrValueForSend::U32(ifindex),
+        )
+        .map_err(|e| {
+            RobinError::Netlink(format!("Failed to add MeshIfIndex attribute: {:?}", e))
+        })?;
+
+    let msg = netlink::build_genl_msg(netlink::Command::BatadvCmdGetOriginators, attrs.build())
+        .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
+
+    let mut socket = netlink::BatadvSocket::connect()
+        .await
+        .map_err(|e| RobinError::Netlink(format!("Failed to connect to socket: {:?}", e)))?;
+
+    let mut response = socket
+        .send(NlmF::REQUEST | NlmF::DUMP, msg)
+        .await
+        .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
+
+    while let Some(msg) = response.next().await {
+        let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> =
+            msg.map_err(|e| RobinError::Netlink(format!("Netlink message error: {:?}", e)))?;
+
+        if let Some(payload) = msg.get_payload() {
+            let attrs = payload.attrs().get_attr_handle();
+
+            if let Ok(bytes) =
+                attrs.get_attr_payload_as::<[u8; 32]>(netlink::Attribute::BatadvAttrAlgoName.into())
+            {
+                let nul_pos = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
+                let name = String::from_utf8_lossy(&bytes[..nul_pos]).to_string();
+                return Ok(name);
+            }
+        }
+    }
+
+    Err(RobinError::NotFound(
+        "Algorithm name not found for interface bat0".into(),
+    ))
+}

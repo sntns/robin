@@ -1,67 +1,75 @@
 use robin;
 
+mod app;
+mod gateways;
+mod gw_mode;
+mod neighbors;
+mod originators;
+mod transglobal;
+mod translocal;
+
+// TODO: See for RobinError that is exported is doc
+
 #[tokio::main]
 async fn main() {
     let client = robin::RobinClient::new();
-    let orig = client.originators().await.unwrap();
-    let gateways = client.gateways().await.unwrap();
-    let gateway_mode = client.get_gw_mode().await.unwrap();
+    let matches = app::build_cli().get_matches();
+    let algo_name = client.algo_name().await.unwrap();
 
-    println!("   Originator        last-seen (#/255) Nexthop           [outgoingIF]");
-    for o in orig {
-        println!(
-            "{} {:} {:>7.3}s   ({:>3}) {:} [{}]",
-            if o.is_best { "*" } else { " " },
-            o.originator.to_string(),
-            o.last_seen_ms as f64 / 1000.0,
-            o.tq.unwrap_or(0),
-            o.next_hop.to_string(),
-            o.outgoing_if
-        );
-    }
-
-    println!("\n\n");
-
-    for g in gateways {
-        println!(
-            "{} {:02x?} via {:02x?} on {} down={:?} up={:?} throughput={:?} tq={:?}",
-            if g.is_best { "*" } else { " " },
-            g.mac_addr,
-            g.router,
-            g.outgoing_if,
-            g.bandwidth_down,
-            g.bandwidth_up,
-            g.throughput,
-            g.tq
-        );
-    }
-
-    println!("\n\n");
-
-    match gateway_mode.mode {
-        robin::GwMode::Off => {
-            println!("off");
+    match matches.subcommand() {
+        Some(("neighbors", _)) => {
+            let entries = client.neighbors().await.unwrap();
+            neighbors::print_neighbors(&entries, algo_name.as_str());
         }
-
-        robin::GwMode::Client => {
-            println!(
-                "client (selection class: {}.{} MBit)",
-                gateway_mode.sel_class / 10,
-                gateway_mode.sel_class % 10
-            );
+        Some(("gateways", _)) => {
+            let entries = client.gateways().await.unwrap();
+            gateways::print_gwl(&entries, algo_name.as_str());
         }
+        Some(("gw_mode", sub_m)) => {
+            let mode_str = sub_m.get_one::<String>("mode").map(String::as_str);
+            let param_str = sub_m.get_one::<String>("param").map(String::as_str);
 
-        robin::GwMode::Server => {
-            let d_major = gateway_mode.bandwidth_down / 10;
-            let d_minor = gateway_mode.bandwidth_down % 10;
-            let u_major = gateway_mode.bandwidth_up / 10;
-            let u_minor = gateway_mode.bandwidth_up % 10;
+            if mode_str.is_none() {
+                let entries = client.get_gw_mode().await.unwrap();
+                gw_mode::print_gw(&entries);
+                return;
+            }
 
-            println!(
-                "server (announced bw: {}.{}/{}.{} MBit)",
-                d_major, d_minor, u_major, u_minor
-            );
+            let mode = match mode_str.unwrap() {
+                "off" => robin::GwMode::Off,
+                "client" => robin::GwMode::Client,
+                "server" => robin::GwMode::Server,
+                other => {
+                    eprintln!("Invalid mode: {}", other);
+                    return;
+                }
+            };
+
+            let (down, up, sel_class) = if let Some(param) = param_str {
+                gw_mode::parse_gw_param(mode, param).unwrap()
+            } else {
+                (None, None, None)
+            };
+
+            client.set_gw_mode(mode, down, up, sel_class).await.unwrap();
+
+            // TODO: Not sure
+            let entries = client.get_gw_mode().await.unwrap();
+            gw_mode::print_gw(&entries);
+            //
         }
-        _ => {}
+        Some(("originators", _)) => {
+            let entries = client.originators().await.unwrap();
+            originators::print_originators(&entries, algo_name.as_str());
+        }
+        Some(("translocal", _)) => {
+            let entries = client.translocal().await.unwrap();
+            translocal::print_translocal(&entries);
+        }
+        Some(("transglobal", _)) => {
+            let entries = client.transglobal().await.unwrap();
+            transglobal::print_transglobal(&entries);
+        }
+        _ => unreachable!("Subcommand required"),
     }
 }

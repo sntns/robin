@@ -48,8 +48,8 @@ pub async fn get_gateway() -> Result<GatewayInfo, RobinError> {
         Ok(0) => GwMode::Off,
         Ok(1) => GwMode::Client,
         Ok(2) => GwMode::Server,
-        Ok(x) => GwMode::Unknown(x),
-        Err(_) => GwMode::Unknown(255),
+        Ok(_) => GwMode::Unknown,
+        Err(_) => GwMode::Unknown,
     };
 
     let sel_class = attrs
@@ -66,11 +66,11 @@ pub async fn get_gateway() -> Result<GatewayInfo, RobinError> {
 
     let algo = attrs
         .get_attr_payload_as::<[u8; 32]>(netlink::Attribute::BatadvAttrAlgoName.into())
-        .ok()
         .map(|bytes| {
             let nul_pos = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
             String::from_utf8_lossy(&bytes[..nul_pos]).into_owned()
-        });
+        })
+        .map_err(|e| RobinError::Parse(format!("Missing ALGO_NAME: {:?}", e)))?;
 
     Ok(GatewayInfo {
         mode,
@@ -155,11 +155,10 @@ pub async fn set_gateway(
                 .map_err(|e| RobinError::Netlink(format!("Failed to add GwSelClass: {:?}", e)))?;
         }
 
-        GwMode::Unknown(x) => {
-            return Err(RobinError::Parse(format!(
-                "Cannot set unknown gateway mode {}",
-                x
-            )));
+        GwMode::Unknown => {
+            return Err(RobinError::Parse(
+                "Cannot set unknown gateway mode".to_string(),
+            ));
         }
     }
 
