@@ -1,5 +1,5 @@
 use crate::error::RobinError;
-use crate::netlink::{/*AttrObject, AttrValue, Attribute,*/ Command};
+use crate::model::Command;
 
 use neli::consts::nl::NlmF;
 use neli::genl::{Genlmsghdr, GenlmsghdrBuilder};

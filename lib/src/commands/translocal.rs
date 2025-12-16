@@ -1,5 +1,5 @@
 use crate::error::RobinError;
-use crate::model::TranslocalEntry;
+use crate::model::{AttrValueForSend, Attribute, ClientFlags, Command, TranslocalEntry};
 use crate::netlink;
 use macaddr::MacAddr6;
 use neli::consts::nl::NlmF;
@@ -16,12 +16,12 @@ pub async fn get_translocal() -> Result<Vec<TranslocalEntry>, RobinError> {
 
     attrs
         .add(
-            netlink::Attribute::BatadvAttrMeshIfindex,
-            netlink::AttrValueForSend::U32(ifindex),
+            Attribute::BatadvAttrMeshIfindex,
+            AttrValueForSend::U32(ifindex),
         )
         .map_err(|e| RobinError::Netlink(format!("Failed to add MeshIfIndex: {:?}", e)))?;
 
-    let msg = netlink::build_genl_msg(netlink::Command::BatadvCmdGetTranstableLocal, attrs.build())
+    let msg = netlink::build_genl_msg(Command::BatadvCmdGetTranstableLocal, attrs.build())
         .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
 
     // Send
@@ -66,24 +66,24 @@ pub async fn get_translocal() -> Result<Vec<TranslocalEntry>, RobinError> {
             .get_attr_handle();
 
         let client = attrs
-            .get_attr_payload_as::<[u8; 6]>(netlink::Attribute::BatadvAttrTtAddress.into())
+            .get_attr_payload_as::<[u8; 6]>(Attribute::BatadvAttrTtAddress.into())
             .map_err(|e| RobinError::Parse(format!("Missing TT_ADDRESS: {:?}", e)))?;
         let vid = attrs
-            .get_attr_payload_as::<u16>(netlink::Attribute::BatadvAttrTtVid.into())
+            .get_attr_payload_as::<u16>(Attribute::BatadvAttrTtVid.into())
             .map_err(|e| RobinError::Parse(format!("Missing TT_VID: {:?}", e)))?;
         let crc32 = attrs
-            .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrTtCrc32.into())
+            .get_attr_payload_as::<u32>(Attribute::BatadvAttrTtCrc32.into())
             .map_err(|e| RobinError::Parse(format!("Missing TT_CRC32: {:?}", e)))?;
-        let flags = attrs
-            .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrTtFlags.into())
+        let raw_flags = attrs
+            .get_attr_payload_as::<u32>(Attribute::BatadvAttrTtFlags.into())
             .map_err(|e| RobinError::Parse(format!("Missing TT_FLAGS: {:?}", e)))?;
+        let flags = ClientFlags::from_bits_truncate(raw_flags);
 
-        let (last_seen_secs, last_seen_msecs) = match attrs
-            .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrLastSeenMsecs.into())
-        {
-            Ok(ms) => (ms / 1000, ms % 1000),
-            Err(_) => (0, 0),
-        };
+        let (last_seen_secs, last_seen_msecs) =
+            match attrs.get_attr_payload_as::<u32>(Attribute::BatadvAttrLastSeenMsecs.into()) {
+                Ok(ms) => (ms / 1000, ms % 1000),
+                Err(_) => (0, 0),
+            };
 
         entries.push(TranslocalEntry {
             client: MacAddr6::from(client),

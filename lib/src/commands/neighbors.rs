@@ -1,5 +1,5 @@
 use crate::error::RobinError;
-use crate::model::Neighbor;
+use crate::model::{AttrValueForSend, Attribute, Command, Neighbor};
 use crate::netlink;
 use macaddr::MacAddr6;
 use neli::consts::nl::{NlmF, Nlmsg};
@@ -15,14 +15,14 @@ pub async fn get_neighbors() -> Result<Vec<Neighbor>, RobinError> {
 
     attrs
         .add(
-            netlink::Attribute::BatadvAttrMeshIfindex,
-            netlink::AttrValueForSend::U32(ifindex),
+            Attribute::BatadvAttrMeshIfindex,
+            AttrValueForSend::U32(ifindex),
         )
         .map_err(|e| {
             RobinError::Netlink(format!("Failed to add MeshIfindex attribute: {:?}", e))
         })?;
 
-    let msg = netlink::build_genl_msg(netlink::Command::BatadvCmdGetOriginators, attrs.build())
+    let msg = netlink::build_genl_msg(Command::BatadvCmdGetOriginators, attrs.build())
         .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
 
     let mut sock = netlink::BatadvSocket::connect()
@@ -70,32 +70,31 @@ pub async fn get_neighbors() -> Result<Vec<Neighbor>, RobinError> {
             .get_attr_handle();
 
         let neigh_addr = attrs
-            .get_attr_payload_as::<[u8; 6]>(netlink::Attribute::BatadvAttrNeighAddress.into())
+            .get_attr_payload_as::<[u8; 6]>(Attribute::BatadvAttrNeighAddress.into())
             .map_err(|e| RobinError::Parse(format!("Missing NEIGH_ADDRESS: {:?}", e)))?;
 
         let last_seen_ms = attrs
-            .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrLastSeenMsecs.into())
+            .get_attr_payload_as::<u32>(Attribute::BatadvAttrLastSeenMsecs.into())
             .map_err(|e| RobinError::Parse(format!("Missing LAST_SEEN_MSECS: {:?}", e)))?;
 
-        let outgoing_if = match attrs
-            .get_attr_payload_as::<[u8; 16]>(netlink::Attribute::BatadvAttrHardIfname.into())
-        {
-            Ok(bytes) => {
-                let nul_pos = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
-                String::from_utf8_lossy(&bytes[..nul_pos]).into_owned()
-            }
-            Err(_) => {
-                let ifindex = attrs
-                    .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrHardIfindex.into())
-                    .map_err(|e| RobinError::Parse(format!("Missing HARD_IFINDEX: {:?}", e)))?;
-                netlink::ifindex_to_name(ifindex).await.map_err(|e| {
-                    RobinError::Netlink(format!("Failed to resolve ifindex -> name: {:?}", e))
-                })?
-            }
-        };
+        let outgoing_if =
+            match attrs.get_attr_payload_as::<[u8; 16]>(Attribute::BatadvAttrHardIfname.into()) {
+                Ok(bytes) => {
+                    let nul_pos = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
+                    String::from_utf8_lossy(&bytes[..nul_pos]).into_owned()
+                }
+                Err(_) => {
+                    let ifindex = attrs
+                        .get_attr_payload_as::<u32>(Attribute::BatadvAttrHardIfindex.into())
+                        .map_err(|e| RobinError::Parse(format!("Missing HARD_IFINDEX: {:?}", e)))?;
+                    netlink::ifindex_to_name(ifindex).await.map_err(|e| {
+                        RobinError::Netlink(format!("Failed to resolve ifindex -> name: {:?}", e))
+                    })?
+                }
+            };
 
         let throughput_kbps = attrs
-            .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrThroughput.into())
+            .get_attr_payload_as::<u32>(Attribute::BatadvAttrThroughput.into())
             .ok();
 
         // push entry

@@ -2,7 +2,7 @@ use neli::genl::{AttrTypeBuilder, NlattrBuilder};
 use neli::types::{Buffer, GenlBuffer};
 
 use crate::error::RobinError;
-use crate::netlink::{AttrValueForSend, Attribute};
+use crate::model::{AttrValueForSend, Attribute};
 
 pub(crate) struct GenlAttrBuilder {
     buf: GenlBuffer<u16, Buffer>,

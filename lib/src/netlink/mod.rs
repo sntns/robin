@@ -1,13 +1,9 @@
-mod attribute;
 mod attribute_builder;
-mod command;
 mod index;
 mod message;
 mod socket;
 
-pub(crate) use attribute::*;
 pub(crate) use attribute_builder::*;
-pub(crate) use command::*;
 pub(crate) use index::*;
 pub(crate) use message::*;
 pub(crate) use socket::*;

@@ -1,5 +1,5 @@
 use crate::error::RobinError;
-use crate::model::{GatewayInfo, GwMode};
+use crate::model::{AttrValueForSend, Attribute, Command, GatewayInfo, GwMode};
 use crate::netlink;
 use neli::consts::nl::{NlmF, Nlmsg};
 use neli::genl::Genlmsghdr;
@@ -14,14 +14,14 @@ pub async fn get_gateway() -> Result<GatewayInfo, RobinError> {
 
     attrs
         .add(
-            netlink::Attribute::BatadvAttrMeshIfindex,
-            netlink::AttrValueForSend::U32(ifindex),
+            Attribute::BatadvAttrMeshIfindex,
+            AttrValueForSend::U32(ifindex),
         )
         .map_err(|e| {
             RobinError::Netlink(format!("Failed to add MeshIfIndex attribute: {:?}", e))
         })?;
 
-    let msg = netlink::build_genl_msg(netlink::Command::BatadvCmdGetMesh, attrs.build())?;
+    let msg = netlink::build_genl_msg(Command::BatadvCmdGetMeshInfo, attrs.build())?;
 
     let mut socket = netlink::BatadvSocket::connect()
         .await
@@ -44,7 +44,7 @@ pub async fn get_gateway() -> Result<GatewayInfo, RobinError> {
         .attrs()
         .get_attr_handle();
 
-    let mode = match attrs.get_attr_payload_as::<u8>(netlink::Attribute::BatadvAttrGwMode.into()) {
+    let mode = match attrs.get_attr_payload_as::<u8>(Attribute::BatadvAttrGwMode.into()) {
         Ok(0) => GwMode::Off,
         Ok(1) => GwMode::Client,
         Ok(2) => GwMode::Server,
@@ -53,19 +53,19 @@ pub async fn get_gateway() -> Result<GatewayInfo, RobinError> {
     };
 
     let sel_class = attrs
-        .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrGwSelClass.into())
+        .get_attr_payload_as::<u32>(Attribute::BatadvAttrGwSelClass.into())
         .map_err(|e| RobinError::Parse(format!("Missing GW_SEL_CLASS: {:?}", e)))?;
 
     let bandwidth_down = attrs
-        .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrGwBandwidthDown.into())
+        .get_attr_payload_as::<u32>(Attribute::BatadvAttrGwBandwidthDown.into())
         .map_err(|e| RobinError::Parse(format!("Missing GW_BANDWIDTH_DOWN: {:?}", e)))?;
 
     let bandwidth_up = attrs
-        .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrGwBandwidthUp.into())
+        .get_attr_payload_as::<u32>(Attribute::BatadvAttrGwBandwidthUp.into())
         .map_err(|e| RobinError::Parse(format!("Missing GW_BANDWIDTH_UP: {:?}", e)))?;
 
     let algo = attrs
-        .get_attr_payload_as::<[u8; 32]>(netlink::Attribute::BatadvAttrAlgoName.into())
+        .get_attr_payload_as::<[u8; 32]>(Attribute::BatadvAttrAlgoName.into())
         .map(|bytes| {
             let nul_pos = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
             String::from_utf8_lossy(&bytes[..nul_pos]).into_owned()
@@ -95,8 +95,8 @@ pub async fn set_gateway(
 
     attrs
         .add(
-            netlink::Attribute::BatadvAttrMeshIfindex,
-            netlink::AttrValueForSend::U32(ifindex),
+            Attribute::BatadvAttrMeshIfindex,
+            AttrValueForSend::U32(ifindex),
         )
         .map_err(|e| {
             RobinError::Netlink(format!("Failed to add MeshIfIndex attribute: {:?}", e))
@@ -105,34 +105,25 @@ pub async fn set_gateway(
     match mode {
         GwMode::Off => {
             attrs
-                .add(
-                    netlink::Attribute::BatadvAttrGwMode,
-                    netlink::AttrValueForSend::U8(0),
-                )
+                .add(Attribute::BatadvAttrGwMode, AttrValueForSend::U8(0))
                 .map_err(|e| RobinError::Netlink(format!("Failed to add GwMode: {:?}", e)))?;
         }
 
         GwMode::Client => {
             attrs
-                .add(
-                    netlink::Attribute::BatadvAttrGwMode,
-                    netlink::AttrValueForSend::U8(1),
-                )
+                .add(Attribute::BatadvAttrGwMode, AttrValueForSend::U8(1))
                 .map_err(|e| RobinError::Netlink(format!("Failed to add GwMode: {:?}", e)))?;
         }
 
         GwMode::Server => {
             attrs
-                .add(
-                    netlink::Attribute::BatadvAttrGwMode,
-                    netlink::AttrValueForSend::U8(2),
-                )
+                .add(Attribute::BatadvAttrGwMode, AttrValueForSend::U8(2))
                 .map_err(|e| RobinError::Netlink(format!("Failed to add GwMode: {:?}", e)))?;
 
             attrs
                 .add(
-                    netlink::Attribute::BatadvAttrGwBandwidthDown,
-                    netlink::AttrValueForSend::U32(down.unwrap_or(10)),
+                    Attribute::BatadvAttrGwBandwidthDown,
+                    AttrValueForSend::U32(down.unwrap_or(10)),
                 )
                 .map_err(|e| {
                     RobinError::Netlink(format!("Failed to add GwBandwidthDown: {:?}", e))
@@ -140,8 +131,8 @@ pub async fn set_gateway(
 
             attrs
                 .add(
-                    netlink::Attribute::BatadvAttrGwBandwidthUp,
-                    netlink::AttrValueForSend::U32(up.unwrap_or(2)),
+                    Attribute::BatadvAttrGwBandwidthUp,
+                    AttrValueForSend::U32(up.unwrap_or(2)),
                 )
                 .map_err(|e| {
                     RobinError::Netlink(format!("Failed to add GwBandwidthUp: {:?}", e))
@@ -149,8 +140,8 @@ pub async fn set_gateway(
 
             attrs
                 .add(
-                    netlink::Attribute::BatadvAttrGwSelClass,
-                    netlink::AttrValueForSend::U32(sel_class.unwrap_or(0)),
+                    Attribute::BatadvAttrGwSelClass,
+                    AttrValueForSend::U32(sel_class.unwrap_or(0)),
                 )
                 .map_err(|e| RobinError::Netlink(format!("Failed to add GwSelClass: {:?}", e)))?;
         }
@@ -162,7 +153,7 @@ pub async fn set_gateway(
         }
     }
 
-    let msg = netlink::build_genl_msg(netlink::Command::BatadvCmdSetMesh, attrs.build())?;
+    let msg = netlink::build_genl_msg(Command::BatadvCmdSetMesh, attrs.build())?;
 
     let mut socket = netlink::BatadvSocket::connect()
         .await

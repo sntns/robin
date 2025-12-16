@@ -1,4 +1,6 @@
 use crate::robin::TransglobalEntry;
+use crate::robin::model::ClientFlags;
+use crate::utils::print_vid;
 
 use clap::Command;
 use comfy_table::presets::UTF8_FULL;
@@ -34,10 +36,26 @@ pub fn print_transglobal(entries: &[TransglobalEntry]) {
     ]);
 
     for e in entries {
-        let r = if e.flags & 0x01 != 0 { 'R' } else { '.' };
-        let w = if e.flags & 0x02 != 0 { 'W' } else { '.' };
-        let i = if e.flags & 0x04 != 0 { 'I' } else { '.' };
-        let t = if e.flags & 0x08 != 0 { 'T' } else { '.' };
+        let r = if e.flags.contains(ClientFlags::ROAM) {
+            'R'
+        } else {
+            '.'
+        };
+        let w = if e.flags.contains(ClientFlags::WIFI) {
+            'W'
+        } else {
+            '.'
+        };
+        let i = if e.flags.contains(ClientFlags::ISOLA) {
+            'I'
+        } else {
+            '.'
+        };
+        let t = if e.flags.contains(ClientFlags::TEMP) {
+            'T'
+        } else {
+            '.'
+        };
 
         let mut client_cell = Cell::new(e.client.to_string());
         let mut orig_cell = Cell::new(e.orig.to_string());
@@ -49,11 +67,11 @@ pub fn print_transglobal(entries: &[TransglobalEntry]) {
 
         table.add_row(vec![
             client_cell,
-            Cell::new(e.vid).set_alignment(CellAlignment::Right),
+            Cell::new(print_vid(e.vid)).set_alignment(CellAlignment::Right),
             Cell::new(format!("[{}{}{}{}]", r, w, i, t)),
-            Cell::new(e.last_ttvn).set_alignment(CellAlignment::Right),
-            orig_cell,
             Cell::new(e.ttvn).set_alignment(CellAlignment::Right),
+            orig_cell,
+            Cell::new(e.last_ttvn).set_alignment(CellAlignment::Right),
             Cell::new(format!("0x{:08x}", e.crc32)).set_alignment(CellAlignment::Right),
         ]);
     }

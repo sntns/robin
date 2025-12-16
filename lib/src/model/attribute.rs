@@ -70,23 +70,3 @@ impl From<Attribute> for u16 {
         a as u16
     }
 }
-
-/*#[derive(Debug, Clone)]
-pub enum AttrValue {
-    U8(u8),
-    U16(u16),
-    U32(u32),
-    Bytes(Vec<u8>),
-    String(String),
-    Nested(Vec<AttrObject>), // attribute set
-}
-
-pub type AttrObject = HashMap<u16, AttrValue>;*/
-
-pub enum AttrValueForSend {
-    U8(u8),
-    U16(u16),
-    U32(u32),
-    Bytes(Vec<u8>),
-    String(String),
-}

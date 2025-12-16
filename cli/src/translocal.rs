@@ -1,4 +1,6 @@
 use crate::robin::TranslocalEntry;
+use crate::robin::model::ClientFlags;
+use crate::utils::print_vid;
 
 use clap::Command;
 use comfy_table::presets::UTF8_FULL;
@@ -32,18 +34,42 @@ pub fn print_translocal(entries: &[TranslocalEntry]) {
     ]);
 
     for e in entries {
-        let r = if e.flags & 0x01 != 0 { 'R' } else { '.' };
-        let p = if e.flags & 0x02 != 0 { 'P' } else { '.' };
-        let n = if e.flags & 0x04 != 0 { 'N' } else { '.' };
-        let x = if e.flags & 0x08 != 0 { 'X' } else { '.' };
-        let w = if e.flags & 0x10 != 0 { 'W' } else { '.' };
-        let i = if e.flags & 0x20 != 0 { 'I' } else { '.' };
+        let r = if e.flags.contains(ClientFlags::ROAM) {
+            'R'
+        } else {
+            '.'
+        };
+        let p = if e.flags.contains(ClientFlags::NOPURGE) {
+            'P'
+        } else {
+            '.'
+        };
+        let n = if e.flags.contains(ClientFlags::NEW) {
+            'N'
+        } else {
+            '.'
+        };
+        let x = if e.flags.contains(ClientFlags::PENDING) {
+            'X'
+        } else {
+            '.'
+        };
+        let w = if e.flags.contains(ClientFlags::WIFI) {
+            'W'
+        } else {
+            '.'
+        };
+        let i = if e.flags.contains(ClientFlags::ISOLA) {
+            'I'
+        } else {
+            '.'
+        };
 
         let client_cell = Cell::new(e.client.to_string());
 
         table.add_row(vec![
             client_cell,
-            Cell::new(e.vid).set_alignment(CellAlignment::Right),
+            Cell::new(print_vid(e.vid)).set_alignment(CellAlignment::Right),
             Cell::new(format!("[{}{}{}{}{}{}]", r, p, n, x, w, i)),
             Cell::new(format!("{}.{:03}", e.last_seen_secs, e.last_seen_msecs))
                 .set_alignment(CellAlignment::Right),

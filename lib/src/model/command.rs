@@ -3,7 +3,7 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Command {
     BatadvCmdUnspec = 0,
-    BatadvCmdGetMesh = 1,
+    BatadvCmdGetMeshInfo = 1,
     BatadvCmdTpMeter = 2,
     BatadvCmdTpMeterCancel = 3,
     BatadvCmdGetRoutingAlgos = 4,

@@ -11,3 +11,4 @@ path = "src/lib.rs"
 neli = { version = "0.7", features = ["async"] }
 thiserror = "2.0.17"
 macaddr = "1"
+bitflags = "2"

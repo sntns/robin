@@ -1,5 +1,5 @@
 use crate::error::RobinError;
-use crate::model::Gateway;
+use crate::model::{AttrValueForSend, Attribute, Command, Gateway};
 use crate::netlink;
 use macaddr::MacAddr6;
 use neli::consts::nl::{NlmF, Nlmsg};
@@ -15,14 +15,14 @@ pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
 
     attrs
         .add(
-            netlink::Attribute::BatadvAttrMeshIfindex,
-            netlink::AttrValueForSend::U32(ifindex),
+            Attribute::BatadvAttrMeshIfindex,
+            AttrValueForSend::U32(ifindex),
         )
         .map_err(|e| {
             RobinError::Netlink(format!("Failed to add MeshIfIndex attribute: {:?}", e))
         })?;
 
-    let msg = netlink::build_genl_msg(netlink::Command::BatadvCmdGetGateways, attrs.build())
+    let msg = netlink::build_genl_msg(Command::BatadvCmdGetGateways, attrs.build())
         .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
 
     let mut socket = netlink::BatadvSocket::connect()
@@ -69,46 +69,44 @@ pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
             .get_attr_handle();
 
         let is_best = attrs
-            .get_attr_payload_as::<u8>(netlink::Attribute::BatadvAttrFlagBest.into())
-            .map(|_| true)
-            .unwrap_or(false);
+            .get_attribute(Attribute::BatadvAttrFlagBest.into())
+            .is_some();
 
         let mac_addr = attrs
-            .get_attr_payload_as::<[u8; 6]>(netlink::Attribute::BatadvAttrOrigAddress.into())
+            .get_attr_payload_as::<[u8; 6]>(Attribute::BatadvAttrOrigAddress.into())
             .map_err(|e| RobinError::Parse(format!("Missing ORIG_ADDRESS: {:?}", e)))?;
 
         let router = attrs
-            .get_attr_payload_as::<[u8; 6]>(netlink::Attribute::BatadvAttrRouter.into())
+            .get_attr_payload_as::<[u8; 6]>(Attribute::BatadvAttrRouter.into())
             .map_err(|e| RobinError::Parse(format!("Missing ROUTER: {:?}", e)))?;
 
-        let outgoing_if = match attrs
-            .get_attr_payload_as::<[u8; 16]>(netlink::Attribute::BatadvAttrHardIfname.into())
-        {
-            Ok(bytes) => {
-                let nul_pos = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
-                String::from_utf8_lossy(&bytes[..nul_pos]).into_owned()
-            }
-            Err(_) => {
-                let ifindex = attrs
-                    .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrHardIfindex.into())
-                    .map_err(|e| RobinError::Parse(format!("Missing HARD_IFINDEX: {:?}", e)))?;
-                netlink::ifindex_to_name(ifindex).await.map_err(|e| {
-                    RobinError::Netlink(format!("Failed to get ifname from ifindex: {:?}", e))
-                })?
-            }
-        };
+        let outgoing_if =
+            match attrs.get_attr_payload_as::<[u8; 16]>(Attribute::BatadvAttrHardIfname.into()) {
+                Ok(bytes) => {
+                    let nul_pos = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
+                    String::from_utf8_lossy(&bytes[..nul_pos]).into_owned()
+                }
+                Err(_) => {
+                    let ifindex = attrs
+                        .get_attr_payload_as::<u32>(Attribute::BatadvAttrHardIfindex.into())
+                        .map_err(|e| RobinError::Parse(format!("Missing HARD_IFINDEX: {:?}", e)))?;
+                    netlink::ifindex_to_name(ifindex).await.map_err(|e| {
+                        RobinError::Netlink(format!("Failed to get ifname from ifindex: {:?}", e))
+                    })?
+                }
+            };
 
         let bandwidth_down = attrs
-            .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrBandwidthDown.into())
+            .get_attr_payload_as::<u32>(Attribute::BatadvAttrBandwidthDown.into())
             .ok();
         let bandwidth_up = attrs
-            .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrBandwidthUp.into())
+            .get_attr_payload_as::<u32>(Attribute::BatadvAttrBandwidthUp.into())
             .ok();
         let throughput = attrs
-            .get_attr_payload_as::<u32>(netlink::Attribute::BatadvAttrThroughput.into())
+            .get_attr_payload_as::<u32>(Attribute::BatadvAttrThroughput.into())
             .ok();
         let tq = attrs
-            .get_attr_payload_as::<u8>(netlink::Attribute::BatadvAttrTq.into())
+            .get_attr_payload_as::<u8>(Attribute::BatadvAttrTq.into())
             .ok();
 
         gateways.push(Gateway {

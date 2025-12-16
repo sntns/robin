@@ -7,6 +7,7 @@ mod neighbors;
 mod originators;
 mod transglobal;
 mod translocal;
+mod utils;
 
 // TODO: See for RobinError that is exported is doc
 
