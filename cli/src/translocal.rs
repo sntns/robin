@@ -26,11 +26,11 @@ pub fn print_translocal(entries: &[TranslocalEntry]) {
         .set_content_arrangement(ContentArrangement::Dynamic);
 
     table.set_header(vec![
-        Cell::new("Client"),
-        Cell::new("VID"),
-        Cell::new("Flags"),
-        Cell::new("Last seen"),
-        Cell::new("CRC32"),
+        Cell::new("Client").set_alignment(CellAlignment::Center),
+        Cell::new("VID").set_alignment(CellAlignment::Center),
+        Cell::new("Flags").set_alignment(CellAlignment::Center),
+        Cell::new("Last seen").set_alignment(CellAlignment::Center),
+        Cell::new("CRC32").set_alignment(CellAlignment::Center),
     ]);
 
     for e in entries {
@@ -69,11 +69,10 @@ pub fn print_translocal(entries: &[TranslocalEntry]) {
 
         table.add_row(vec![
             client_cell,
-            Cell::new(print_vid(e.vid)).set_alignment(CellAlignment::Right),
+            Cell::new(print_vid(e.vid)),
             Cell::new(format!("[{}{}{}{}{}{}]", r, p, n, x, w, i)),
-            Cell::new(format!("{}.{:03}", e.last_seen_secs, e.last_seen_msecs))
-                .set_alignment(CellAlignment::Right),
-            Cell::new(format!("0x{:08x}", e.crc32)).set_alignment(CellAlignment::Right),
+            Cell::new(format!("{}.{:03}", e.last_seen_secs, e.last_seen_msecs)),
+            Cell::new(format!("0x{:08x}", e.crc32)),
         ]);
     }
 

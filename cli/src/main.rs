@@ -9,7 +9,7 @@ mod transglobal;
 mod translocal;
 mod utils;
 
-// TODO: See for RobinError that is exported is doc
+// TODO: fix neighbor command where everything is doubled
 
 #[tokio::main]
 async fn main() {

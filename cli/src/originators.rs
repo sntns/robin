@@ -2,7 +2,7 @@ use crate::robin::Originator;
 
 use clap::Command;
 use comfy_table::presets::UTF8_FULL;
-use comfy_table::{Attribute, Cell, CellAlignment, Color, ContentArrangement, Table};
+use comfy_table::{Cell, CellAlignment, ContentArrangement, Table};
 
 pub fn cmd_originators() -> Command {
     Command::new("originators")
@@ -26,20 +26,20 @@ pub fn print_originators(entries: &[Originator], algo_name: &str) {
     match algo_name {
         "BATMAN_IV" => {
             table.set_header(vec![
-                Cell::new("Originator"),
-                Cell::new("Last seen"),
-                Cell::new("TQ"),
-                Cell::new("Next hop"),
-                Cell::new("Outgoing IF"),
+                Cell::new("Originator").set_alignment(CellAlignment::Center),
+                Cell::new("Last seen").set_alignment(CellAlignment::Center),
+                Cell::new("TQ").set_alignment(CellAlignment::Center),
+                Cell::new("Next hop").set_alignment(CellAlignment::Center),
+                Cell::new("Outgoing IF").set_alignment(CellAlignment::Center),
             ]);
         }
         "BATMAN_V" => {
             table.set_header(vec![
-                Cell::new("Originator"),
-                Cell::new("Last seen"),
-                Cell::new("Throughput (Mbit/s)"),
-                Cell::new("Next hop"),
-                Cell::new("Outgoing IF"),
+                Cell::new("Originator").set_alignment(CellAlignment::Center),
+                Cell::new("Last seen").set_alignment(CellAlignment::Center),
+                Cell::new("Throughput (Mbit/s)").set_alignment(CellAlignment::Center),
+                Cell::new("Next hop").set_alignment(CellAlignment::Center),
+                Cell::new("Outgoing IF").set_alignment(CellAlignment::Center),
             ]);
         }
         _ => return,
@@ -48,29 +48,24 @@ pub fn print_originators(entries: &[Originator], algo_name: &str) {
     for o in entries {
         let last_seen_secs = o.last_seen_ms / 1000;
         let last_seen_msecs = o.last_seen_ms % 1000;
-
         let last_seen = format!("{}.{:03}s", last_seen_secs, last_seen_msecs);
 
-        let mut originator_cell = Cell::new(o.originator.to_string());
-        let mut next_hop_cell = Cell::new(o.next_hop.to_string());
-        if o.is_best {
-            originator_cell = originator_cell
-                .fg(Color::Green)
-                .add_attribute(Attribute::Bold);
-
-            next_hop_cell = next_hop_cell
-                .fg(Color::Green)
-                .add_attribute(Attribute::Bold);
-        }
+        let originator_text = if o.is_best {
+            format!("* {}", o.originator)
+        } else {
+            o.originator.to_string()
+        };
+        let originator_cell = Cell::new(originator_text);
+        let next_hop_cell = Cell::new(o.next_hop.to_string());
 
         match algo_name {
             "BATMAN_IV" => {
                 let tq = o.tq.unwrap_or(0);
 
                 table.add_row(vec![
-                    originator_cell,
-                    Cell::new(last_seen).set_alignment(CellAlignment::Right),
-                    Cell::new(format!("{}/255", tq)).set_alignment(CellAlignment::Right),
+                    originator_cell.set_alignment(CellAlignment::Right),
+                    Cell::new(last_seen),
+                    Cell::new(format!("{}/255", tq)),
                     next_hop_cell,
                     Cell::new(&o.outgoing_if),
                 ]);
@@ -83,16 +78,13 @@ pub fn print_originators(entries: &[Originator], algo_name: &str) {
                         let rest = (kbits % 1000) / 100;
 
                         Cell::new(format!("{mbit}.{rest}"))
-                            .set_alignment(CellAlignment::Right)
-                            .fg(Color::Green)
-                            .add_attribute(Attribute::Bold)
                     }
                     None => Cell::new("-"),
                 };
 
                 table.add_row(vec![
-                    originator_cell,
-                    Cell::new(last_seen).set_alignment(CellAlignment::Right),
+                    originator_cell.set_alignment(CellAlignment::Right),
+                    Cell::new(last_seen),
                     throughput_cell,
                     next_hop_cell,
                     Cell::new(&o.outgoing_if),

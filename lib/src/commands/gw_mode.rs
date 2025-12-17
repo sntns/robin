@@ -65,10 +65,10 @@ pub async fn get_gateway() -> Result<GatewayInfo, RobinError> {
         .map_err(|e| RobinError::Parse(format!("Missing GW_BANDWIDTH_UP: {:?}", e)))?;
 
     let algo = attrs
-        .get_attr_payload_as::<[u8; 32]>(Attribute::BatadvAttrAlgoName.into())
+        .get_attr_payload_as_with_len::<Vec<u8>>(Attribute::BatadvAttrAlgoName.into())
         .map(|bytes| {
-            let nul_pos = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
-            String::from_utf8_lossy(&bytes[..nul_pos]).into_owned()
+            let nul = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
+            String::from_utf8_lossy(&bytes[..nul]).into_owned()
         })
         .map_err(|e| RobinError::Parse(format!("Missing ALGO_NAME: {:?}", e)))?;
 

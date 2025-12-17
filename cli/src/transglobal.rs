@@ -4,7 +4,7 @@ use crate::utils::print_vid;
 
 use clap::Command;
 use comfy_table::presets::UTF8_FULL;
-use comfy_table::{Attribute, Cell, CellAlignment, Color, ContentArrangement, Table};
+use comfy_table::{Cell, CellAlignment, ContentArrangement, Table};
 
 pub fn cmd_transglobal() -> Command {
     Command::new("transglobal")
@@ -26,13 +26,13 @@ pub fn print_transglobal(entries: &[TransglobalEntry]) {
         .set_content_arrangement(ContentArrangement::Dynamic);
 
     table.set_header(vec![
-        Cell::new("Client"),
-        Cell::new("VID"),
-        Cell::new("Flags"),
-        Cell::new("Last TTVN"),
-        Cell::new("Originator"),
-        Cell::new("TTVN"),
-        Cell::new("CRC32"),
+        Cell::new("Client").set_alignment(CellAlignment::Center),
+        Cell::new("VID").set_alignment(CellAlignment::Center),
+        Cell::new("Flags").set_alignment(CellAlignment::Center),
+        Cell::new("Last TTVN").set_alignment(CellAlignment::Center),
+        Cell::new("Originator").set_alignment(CellAlignment::Center),
+        Cell::new("TTVN").set_alignment(CellAlignment::Center),
+        Cell::new("CRC32").set_alignment(CellAlignment::Center),
     ]);
 
     for e in entries {
@@ -57,22 +57,22 @@ pub fn print_transglobal(entries: &[TransglobalEntry]) {
             '.'
         };
 
-        let mut client_cell = Cell::new(e.client.to_string());
-        let mut orig_cell = Cell::new(e.orig.to_string());
-        if e.is_best {
-            client_cell = client_cell.fg(Color::Green).add_attribute(Attribute::Bold);
-
-            orig_cell = orig_cell.fg(Color::Green).add_attribute(Attribute::Bold);
-        }
+        let client_text = if e.is_best {
+            format!("* {}", e.client)
+        } else {
+            e.client.to_string()
+        };
+        let client_cell = Cell::new(client_text);
+        let orig_cell = Cell::new(e.orig.to_string());
 
         table.add_row(vec![
-            client_cell,
-            Cell::new(print_vid(e.vid)).set_alignment(CellAlignment::Right),
+            client_cell.set_alignment(CellAlignment::Right),
+            Cell::new(print_vid(e.vid)),
             Cell::new(format!("[{}{}{}{}]", r, w, i, t)),
-            Cell::new(e.ttvn).set_alignment(CellAlignment::Right),
+            Cell::new(e.ttvn),
             orig_cell,
-            Cell::new(e.last_ttvn).set_alignment(CellAlignment::Right),
-            Cell::new(format!("0x{:08x}", e.crc32)).set_alignment(CellAlignment::Right),
+            Cell::new(e.last_ttvn),
+            Cell::new(format!("0x{:08x}", e.crc32)),
         ]);
     }
 
