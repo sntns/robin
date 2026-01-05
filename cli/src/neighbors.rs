@@ -3,6 +3,8 @@ use crate::robin::Neighbor;
 use clap::Command;
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::{Cell, CellAlignment, ContentArrangement, Table};
+use macaddr::MacAddr6;
+use std::collections::HashMap;
 
 pub fn cmd_neighbors() -> Command {
     Command::new("neighbors")
@@ -15,6 +17,26 @@ pub fn cmd_neighbors() -> Command {
         )
         //.disable_help_flag(true)
         .disable_version_flag(true)
+}
+
+pub fn dedup_neighbors(neighbors: Vec<Neighbor>) -> Vec<Neighbor> {
+    let mut map: HashMap<(MacAddr6, String), Neighbor> = HashMap::new();
+
+    for n in neighbors {
+        let key = (n.neigh, n.outgoing_if.clone());
+        match map.get(&key) {
+            Some(existing) => {
+                if n.last_seen_ms < existing.last_seen_ms {
+                    map.insert(key, n);
+                }
+            }
+            None => {
+                map.insert(key, n);
+            }
+        }
+    }
+
+    map.into_values().collect()
 }
 
 pub fn print_neighbors(entries: &[Neighbor], algo_name: &str) {
@@ -42,7 +64,8 @@ pub fn print_neighbors(entries: &[Neighbor], algo_name: &str) {
         _ => return,
     }
 
-    for n in entries {
+    let dedup_entries = dedup_neighbors(entries.to_vec());
+    for n in dedup_entries {
         let last_seen_secs = n.last_seen_ms / 1000;
         let last_seen_msecs = n.last_seen_ms % 1000;
         let last_seen = format!("{}.{:03}s", last_seen_secs, last_seen_msecs);
