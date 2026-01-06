@@ -1,15 +1,17 @@
+use crate::commands::{if_indextoname, if_nametoindex};
 use crate::error::RobinError;
 use crate::model::{AttrValueForSend, Attribute, Command, Gateway};
 use crate::netlink;
+
 use macaddr::MacAddr6;
 use neli::consts::nl::{NlmF, Nlmsg};
 use neli::genl::Genlmsghdr;
 use neli::nl::{NlPayload, Nlmsghdr};
 
 /// Gateways list (batctl gwl)
-pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
+pub async fn get_gateways_list(mesh_if: &str) -> Result<Vec<Gateway>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
-    let ifindex = netlink::ifname_to_index("bat0")
+    let ifindex = if_nametoindex(mesh_if)
         .await
         .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
 
@@ -90,7 +92,7 @@ pub async fn get_gateways_list() -> Result<Vec<Gateway>, RobinError> {
                     let ifindex = attrs
                         .get_attr_payload_as::<u32>(Attribute::BatadvAttrHardIfindex.into())
                         .map_err(|e| RobinError::Parse(format!("Missing HARD_IFINDEX: {:?}", e)))?;
-                    netlink::ifindex_to_name(ifindex).await.map_err(|e| {
+                    if_indextoname(ifindex).await.map_err(|e| {
                         RobinError::Netlink(format!("Failed to get ifname from ifindex: {:?}", e))
                     })?
                 }

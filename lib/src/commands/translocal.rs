@@ -1,6 +1,8 @@
+use crate::commands::utils::if_nametoindex;
 use crate::error::RobinError;
 use crate::model::{AttrValueForSend, Attribute, ClientFlags, Command, TranslocalEntry};
 use crate::netlink;
+
 use macaddr::MacAddr6;
 use neli::consts::nl::NlmF;
 use neli::consts::nl::Nlmsg;
@@ -8,9 +10,9 @@ use neli::genl::Genlmsghdr;
 use neli::nl::NlPayload;
 use neli::nl::Nlmsghdr;
 
-pub async fn get_translocal() -> Result<Vec<TranslocalEntry>, RobinError> {
+pub async fn get_translocal(mesh_if: &str) -> Result<Vec<TranslocalEntry>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
-    let ifindex = netlink::ifname_to_index("bat0")
+    let ifindex = if_nametoindex(mesh_if)
         .await
         .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
 

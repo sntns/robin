@@ -1,6 +1,8 @@
+use crate::commands::{if_indextoname, if_nametoindex};
 use crate::error::RobinError;
 use crate::model::{AttrValueForSend, Attribute, Command, Originator};
 use crate::netlink;
+
 use macaddr::MacAddr6;
 use neli::consts::nl::NlmF;
 use neli::consts::nl::Nlmsg;
@@ -9,10 +11,10 @@ use neli::nl::NlPayload;
 use neli::nl::Nlmsghdr;
 
 /// Originators (batctl o)
-pub async fn get_originators() -> Result<Vec<Originator>, RobinError> {
+pub async fn get_originators(mesh_if: &str) -> Result<Vec<Originator>, RobinError> {
     // Create the value and the attribute
     let mut attrs = netlink::GenlAttrBuilder::new();
-    let ifindex = netlink::ifname_to_index("bat0")
+    let ifindex = if_nametoindex(mesh_if)
         .await
         .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
 
@@ -97,7 +99,7 @@ pub async fn get_originators() -> Result<Vec<Originator>, RobinError> {
                     let ifindex = attrs
                         .get_attr_payload_as::<u32>(Attribute::BatadvAttrHardIfindex.into())
                         .map_err(|e| RobinError::Parse(format!("Missing HARD_IFINDEX: {:?}", e)))?;
-                    netlink::ifindex_to_name(ifindex).await.map_err(|e| {
+                    if_indextoname(ifindex).await.map_err(|e| {
                         RobinError::Netlink(format!("Failed to get ifname from ifindex: {:?}", e))
                     })?
                 }

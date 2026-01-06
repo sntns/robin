@@ -1,14 +1,16 @@
+use crate::commands::if_nametoindex;
 use crate::error::RobinError;
 use crate::model::{AttrValueForSend, Attribute, Command, GatewayInfo, GwMode};
 use crate::netlink;
+
 use neli::consts::nl::{NlmF, Nlmsg};
 use neli::genl::Genlmsghdr;
 use neli::nl::{NlPayload, Nlmsghdr};
 
 /// Get gateway (batctl gw)
-pub async fn get_gateway() -> Result<GatewayInfo, RobinError> {
+pub async fn get_gateway(mesh_if: &str) -> Result<GatewayInfo, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
-    let ifindex = netlink::ifname_to_index("bat0")
+    let ifindex = if_nametoindex(mesh_if)
         .await
         .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
 
@@ -87,9 +89,10 @@ pub async fn set_gateway(
     down: Option<u32>,
     up: Option<u32>,
     sel_class: Option<u32>,
+    mesh_if: &str,
 ) -> Result<(), RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
-    let ifindex = netlink::ifname_to_index("bat0")
+    let ifindex = if_nametoindex(mesh_if)
         .await
         .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
 

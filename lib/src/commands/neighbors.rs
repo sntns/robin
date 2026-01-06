@@ -1,17 +1,19 @@
+use crate::commands::{if_indextoname, if_nametoindex};
 use crate::error::RobinError;
 use crate::model::{AttrValueForSend, Attribute, Command, Neighbor};
 use crate::netlink;
+
 use macaddr::MacAddr6;
 use neli::consts::nl::{NlmF, Nlmsg};
 use neli::genl::Genlmsghdr;
 use neli::nl::{NlPayload, Nlmsghdr};
 
 /// Neighbors (batctl n)
-pub async fn get_neighbors() -> Result<Vec<Neighbor>, RobinError> {
+pub async fn get_neighbors(mesh_if: &str) -> Result<Vec<Neighbor>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
-    let ifindex = netlink::ifname_to_index("bat0")
-        .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to get ifindex for bat0: {:?}", e)))?;
+    let ifindex = if_nametoindex(mesh_if).await.map_err(|e| {
+        RobinError::Netlink(format!("Failed to get ifindex for {:?}: {:?}", mesh_if, e))
+    })?;
 
     attrs
         .add(
@@ -87,7 +89,7 @@ pub async fn get_neighbors() -> Result<Vec<Neighbor>, RobinError> {
                     let ifindex = attrs
                         .get_attr_payload_as::<u32>(Attribute::BatadvAttrHardIfindex.into())
                         .map_err(|e| RobinError::Parse(format!("Missing HARD_IFINDEX: {:?}", e)))?;
-                    netlink::ifindex_to_name(ifindex).await.map_err(|e| {
+                    if_indextoname(ifindex).await.map_err(|e| {
                         RobinError::Netlink(format!("Failed to resolve ifindex -> name: {:?}", e))
                     })?
                 }
