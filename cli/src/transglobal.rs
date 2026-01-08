@@ -15,7 +15,6 @@ pub fn cmd_transglobal() -> Command {
             "robctl [options] tg\n\
              robctl [options] transglobal",
         )
-        //.disable_help_flag(true)
         .disable_version_flag(true)
 }
 

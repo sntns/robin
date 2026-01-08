@@ -2,7 +2,6 @@ use robin::Interface;
 
 use clap::{Arg, ArgMatches, Command};
 
-// TODO: add create and destroy and routing algo optional parameter for create
 pub fn cmd_interfaces() -> Command {
     Command::new("interface")
         .alias("if")

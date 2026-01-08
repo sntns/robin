@@ -15,7 +15,6 @@ pub fn cmd_translocal() -> Command {
             "robctl [options] tl\n\
              robctl [options] translocal",
         )
-        //.disable_help_flag(true)
         .disable_version_flag(true)
 }
 

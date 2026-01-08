@@ -13,7 +13,6 @@ pub fn cmd_gateways() -> Command {
             "robctl [options] gwl\n\
             robctl [options] gateways",
         )
-        //.disable_help_flag(true)
         .disable_version_flag(true)
 }
 

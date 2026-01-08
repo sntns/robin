@@ -13,7 +13,6 @@ pub fn cmd_originators() -> Command {
             "robctl [options] o\n\
              robctl [options] originators",
         )
-        //.disable_help_flag(true)
         .disable_version_flag(true)
 }
 

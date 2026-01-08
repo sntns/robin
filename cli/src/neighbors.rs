@@ -15,7 +15,6 @@ pub fn cmd_neighbors() -> Command {
             "robctl [options] n\n\
              robctl [options] neighbors",
         )
-        //.disable_help_flag(true)
         .disable_version_flag(true)
 }
 
