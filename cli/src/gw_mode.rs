@@ -20,7 +20,6 @@ pub fn cmd_gw_mode() -> Command {
                 .required(false)
                 .help("Gateway parameter (selection class or bandwidth)"),
         )
-        //.disable_help_flag(true)
         .disable_version_flag(true)
 }
 

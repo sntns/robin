@@ -84,7 +84,7 @@ async fn main() {
         Some(("interface", sub_m)) => {
             let manual = sub_m.get_flag("manual");
             let action = sub_m.get_one::<String>("action").map(String::as_str);
-            let interfaces: Vec<&str> = match sub_m.get_many::<String>("interfaces") {
+            let params: Vec<&str> = match sub_m.get_many::<String>("params") {
                 Some(vals) => vals.map(String::as_str).collect(),
                 None => Vec::new(),
             };
@@ -97,33 +97,39 @@ async fn main() {
 
             let action = action.unwrap();
             match action {
-                "destroy" => {
-                    if !interfaces.is_empty() {
+                "destroy" | "D" => {
+                    if !params.is_empty() {
                         eprintln!("Error - extra parameter after '{}'", action);
                         return;
                     }
-                    /*client
-                    .destroy_mesh_interface(mesh_if)
-                    .await
-                    .unwrap();*/
+                    client.destroy_interface(mesh_if).await.unwrap();
                     return;
                 }
-                "create" => {
-                    // create params parsing would go here (routing_algo)
-                    /*client
-                    .create_mesh_interface(mesh_if, parsing_param)
-                    .await
-                    .unwrap();*/
+                "create" | "c" => {
+                    let routing_algo = match params.as_slice() {
+                        [] => None,
+                        ["ra", algo] => Some(*algo),
+                        ["routing_algo", algo] => Some(*algo),
+                        _ => {
+                            eprintln!("Error - invalid parameters for create");
+                            return;
+                        }
+                    };
+
+                    client
+                        .create_interface(mesh_if, routing_algo)
+                        .await
+                        .unwrap();
                     return;
                 }
-                "add" | "del" => {
-                    if interfaces.is_empty() {
+                "add" | "a" | "del" | "d" => {
+                    if params.is_empty() {
                         eprintln!("Error - missing interface name(s) after '{}'", action);
                         return;
                     }
 
                     let exists = client.if_nametoindex(mesh_if).await.unwrap_or(0);
-                    if !manual && exists == 0 && action == "add" {
+                    if !manual && exists == 0 && action.starts_with("a") {
                         /*
                             client
                                 .create_interface(mesh_if, None)
@@ -135,19 +141,19 @@ async fn main() {
 
                     let pre_count = client.count_interfaces(mesh_if).await.unwrap();
 
-                    for iface in &interfaces {
+                    for iface in &params {
                         match action {
-                            "add" => {
+                            "add" | "a" => {
                                 client.set_interface(iface, Some(mesh_if)).await.unwrap();
                             }
-                            "del" => {
+                            "del" | "d" => {
                                 client.set_interface(iface, None).await.unwrap();
                             }
                             _ => unreachable!(),
                         }
                     }
 
-                    if !manual && action == "del" {
+                    if !manual && (action == "del" || action == "d") {
                         let cnt = client.count_interfaces(mesh_if).await.unwrap();
 
                         if cnt == 0 && pre_count > 0 {

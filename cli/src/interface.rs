@@ -9,28 +9,34 @@ pub fn cmd_interfaces() -> Command {
         .about("Display or modify the batman-adv interface settings")
         .long_about(
             "Display or modify the batman-adv interface settings.\n\
+             \n\
              Usage:\n\
-             \trobctl if                 # list interfaces\n\
-             \trobctl if add iface1 ...  # add interfaces to mesh\n\
-             \trobctl if del iface1 ...  # remove interfaces from mesh\n\
-             \t-M disables automatic mesh creation/destruction",
+             \trobctl if                      # list interfaces\n\
+             \trobctl if add iface1 ...       # add interfaces to mesh\n\
+             \trobctl if del iface1 ...       # remove interfaces from mesh\n\
+             \trobctl if create [routing_algo|ra ALGO]     # create batman-adv interface\n\
+             \trobctl if destroy              # destroy batman-adv interface\n\
+             \n\
+             Options:\n\
+             \t-M  Disable automatic creation/destruction of batman-adv interface",
         )
         .arg(
             Arg::new("manual")
                 .short('M')
-                .help("Disable automatic creation/destruction of batman-adv interface"),
+                .help("Disable automatic creation/destruction of batman-adv interface")
+                .action(clap::ArgAction::SetTrue),
         )
         .arg(
             Arg::new("action")
                 .index(1)
-                .value_parser(["add", "del"])
-                .help("Action to perform: add or del"),
+                .value_parser(["add", "a", "del", "d", "create", "c", "destroy", "D"])
+                .help("Action to perform"),
         )
         .arg(
-            Arg::new("interfaces")
+            Arg::new("params")
                 .index(2)
-                .num_args(1..)
-                .help("Interfaces to add or remove"),
+                .num_args(0..)
+                .help("Interfaces (add/del) or create parameters (create)"),
         )
         .disable_version_flag(true)
 }

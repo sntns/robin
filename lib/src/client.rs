@@ -74,6 +74,18 @@ impl RobinClient {
         commands::set_interface(iface, mesh_if).await
     }
 
+    pub async fn create_interface(
+        &self,
+        mesh_if: &str,
+        routing_algo: Option<&str>,
+    ) -> Result<(), RobinError> {
+        commands::create_interface(mesh_if, routing_algo).await
+    }
+
+    pub async fn destroy_interface(&self, mesh_if: &str) -> Result<(), RobinError> {
+        commands::destroy_interface(mesh_if).await
+    }
+
     pub async fn count_interfaces(&self, mesh_if: &str) -> Result<u32, RobinError> {
         commands::count_interfaces(mesh_if).await
     }

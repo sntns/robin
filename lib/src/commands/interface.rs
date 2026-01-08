@@ -5,7 +5,7 @@ use crate::netlink;
 
 use neli::consts::{
     nl::{NlmF, Nlmsg},
-    rtnl::{Ifla, RtAddrFamily, Rtm},
+    rtnl::{Ifla, IflaInfo, RtAddrFamily, Rtm},
     socket::NlFamily,
 };
 use neli::genl::Genlmsghdr;
@@ -187,6 +187,112 @@ pub async fn set_interface(iface: &str, mesh_if: Option<&str>) -> Result<(), Rob
     )
     .await
     .map_err(|e| RobinError::Netlink(format!("Failed to send netlink message: {:?}", e)))?;
+
+    Ok(())
+}
+
+pub async fn create_interface(mesh_if: &str, routing_algo: Option<&str>) -> Result<(), RobinError> {
+    const IFLA_BATADV_ALGO_NAME: u16 = 1;
+    let (rtnl, _) = NlRouter::connect(NlFamily::Route, None, Groups::empty())
+        .await
+        .map_err(|e| RobinError::Netlink(format!("Failed to connect NlRouter: {:?}", e)))?;
+
+    rtnl.enable_ext_ack(true)
+        .map_err(|e| RobinError::Netlink(format!("Failed to enable ext ack: {:?}", e)))?;
+    rtnl.enable_strict_checking(true)
+        .map_err(|e| RobinError::Netlink(format!("Failed to enable strict checking: {:?}", e)))?;
+
+    let ifname_attr = RtattrBuilder::default()
+        .rta_type(Ifla::Ifname)
+        .rta_payload(mesh_if)
+        .build()
+        .map_err(|e| RobinError::Netlink(format!("Failed to build IFNAME attr: {:?}", e)))?;
+
+    let kind_attr = RtattrBuilder::default()
+        .rta_type(IflaInfo::Kind)
+        .rta_payload("batadv")
+        .build()
+        .map_err(|e| RobinError::Netlink(format!("Failed to build INFO_KIND attr: {:?}", e)))?;
+
+    let mut info_data_attrs: RtBuffer<u16, Buffer> = RtBuffer::new();
+    if let Some(algo) = routing_algo {
+        let algo_attr = RtattrBuilder::default()
+            .rta_type(IFLA_BATADV_ALGO_NAME)
+            .rta_payload(algo)
+            .build()
+            .map_err(|e| RobinError::Netlink(format!("Failed to build ALGO_NAME attr: {:?}", e)))?;
+        info_data_attrs.push(algo_attr);
+    }
+
+    let info_data_attr = RtattrBuilder::default()
+        .rta_type(IflaInfo::Data)
+        .rta_payload(info_data_attrs)
+        .build()
+        .map_err(|e| RobinError::Netlink(format!("Failed to build INFO_DATA attr: {:?}", e)))?;
+
+    let mut linkinfo_attrs: RtBuffer<IflaInfo, Buffer> = RtBuffer::new();
+    linkinfo_attrs.push(kind_attr);
+    linkinfo_attrs.push(info_data_attr);
+
+    let linkinfo_attr = RtattrBuilder::default()
+        .rta_type(Ifla::Linkinfo)
+        .rta_payload(linkinfo_attrs)
+        .build()
+        .map_err(|e| RobinError::Netlink(format!("Failed to build LINKINFO attr: {:?}", e)))?;
+
+    let mut rtattrs: RtBuffer<Ifla, Buffer> = RtBuffer::new();
+    rtattrs.push(ifname_attr);
+    rtattrs.push(linkinfo_attr);
+
+    let msg = IfinfomsgBuilder::default()
+        .ifi_family(RtAddrFamily::Unspecified)
+        .rtattrs(rtattrs)
+        .build()
+        .map_err(|e| RobinError::Netlink(format!("Ifinfomsg build failed: {:?}", e)))?;
+
+    rtnl.send::<_, _, Rtm, Ifinfomsg>(
+        Rtm::Newlink,
+        NlmF::REQUEST | NlmF::CREATE | NlmF::EXCL | NlmF::ACK,
+        NlPayload::Payload(msg),
+    )
+    .await
+    .map_err(|e| RobinError::Netlink(format!("Failed to create mesh interface: {:?}", e)))?;
+
+    Ok(())
+}
+
+pub async fn destroy_interface(mesh_if: &str) -> Result<(), RobinError> {
+    let (rtnl, _) = NlRouter::connect(NlFamily::Route, None, Groups::empty())
+        .await
+        .map_err(|e| RobinError::Netlink(format!("Failed to connect NlRouter: {:?}", e)))?;
+
+    rtnl.enable_ext_ack(true)
+        .map_err(|e| RobinError::Netlink(format!("Failed to enable ext ack: {:?}", e)))?;
+    rtnl.enable_strict_checking(true)
+        .map_err(|e| RobinError::Netlink(format!("Failed to enable strict checking: {:?}", e)))?;
+
+    let ifname_attr = RtattrBuilder::default()
+        .rta_type(Ifla::Ifname)
+        .rta_payload(mesh_if)
+        .build()
+        .map_err(|e| RobinError::Netlink(format!("Failed to build IFNAME attr: {:?}", e)))?;
+
+    let mut rtattrs: RtBuffer<Ifla, Buffer> = RtBuffer::new();
+    rtattrs.push(ifname_attr);
+
+    let msg = IfinfomsgBuilder::default()
+        .ifi_family(RtAddrFamily::Unspecified)
+        .rtattrs(rtattrs)
+        .build()
+        .map_err(|e| RobinError::Netlink(format!("Ifinfomsg build failed: {:?}", e)))?;
+
+    rtnl.send::<_, _, Rtm, Ifinfomsg>(
+        Rtm::Dellink,
+        NlmF::REQUEST | NlmF::ACK,
+        NlPayload::Payload(msg),
+    )
+    .await
+    .map_err(|e| RobinError::Netlink(format!("Failed to destroy mesh interface: {:?}", e)))?;
 
     Ok(())
 }
