@@ -9,10 +9,7 @@ pub fn cmd_originators() -> Command {
         .alias("o")
         .about("Display the originator table.")
         .long_about("Display the originator table.")
-        .override_usage(
-            "robctl [options] o\n\
-             robctl [options] originators",
-        )
+        .override_usage("\trobctl [options] originators|o [options]\n")
         .disable_version_flag(true)
 }
 

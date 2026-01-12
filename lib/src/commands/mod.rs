@@ -1,3 +1,6 @@
+mod aggregation;
+mod ap_isolation;
+mod bridge_loop_avoidance;
 mod gateways;
 mod gw_mode;
 mod interface;
@@ -7,6 +10,9 @@ mod transglobal;
 mod translocal;
 mod utils;
 
+pub(crate) use aggregation::*;
+pub(crate) use ap_isolation::*;
+pub(crate) use bridge_loop_avoidance::*;
 pub(crate) use gateways::*;
 pub(crate) use gw_mode::*;
 pub(crate) use interface::*;

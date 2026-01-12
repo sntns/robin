@@ -11,10 +11,7 @@ pub fn cmd_translocal() -> Command {
         .alias("tl")
         .about("Display local translation table.")
         .long_about("Display local translation table.")
-        .override_usage(
-            "robctl [options] tl\n\
-             robctl [options] translocal",
-        )
+        .override_usage("\trobctl [options] translocal|tl [options]\n")
         .disable_version_flag(true)
 }
 

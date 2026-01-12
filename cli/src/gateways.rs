@@ -9,10 +9,7 @@ pub fn cmd_gateways() -> Command {
         .alias("gwl")
         .about("Display the list of gateways.")
         .long_about("Display the list of gateways.")
-        .override_usage(
-            "robctl [options] gwl\n\
-            robctl [options] gateways",
-        )
+        .override_usage("\trobctl [options] gateways|gwl [options]\n")
         .disable_version_flag(true)
 }
 

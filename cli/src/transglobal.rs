@@ -11,10 +11,7 @@ pub fn cmd_transglobal() -> Command {
         .alias("tg")
         .about("Display global translation table.")
         .long_about("Display global translation table.")
-        .override_usage(
-            "robctl [options] tg\n\
-             robctl [options] transglobal",
-        )
+        .override_usage("\trobctl [options] transglobal|tg [options]\n")
         .disable_version_flag(true)
 }
 

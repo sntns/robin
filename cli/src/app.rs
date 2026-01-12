@@ -1,5 +1,6 @@
-use clap::{Arg, Command};
-
+use crate::aggregation::cmd_aggregation;
+use crate::ap_isolation::cmd_ap_isolation;
+use crate::bridge_loop_avoidance::cmd_bridge_loop_avoidance;
 use crate::gateways::cmd_gateways;
 use crate::gw_mode::cmd_gw_mode;
 use crate::interface::cmd_interfaces;
@@ -7,6 +8,7 @@ use crate::neighbors::cmd_neighbors;
 use crate::originators::cmd_originators;
 use crate::transglobal::cmd_transglobal;
 use crate::translocal::cmd_translocal;
+use clap::{Arg, Command};
 
 pub fn build_cli() -> Command {
     Command::new("robctl")
@@ -34,4 +36,7 @@ pub fn build_cli() -> Command {
         .subcommand(cmd_translocal())
         .subcommand(cmd_transglobal())
         .subcommand(cmd_interfaces())
+        .subcommand(cmd_ap_isolation())
+        .subcommand(cmd_aggregation())
+        .subcommand(cmd_bridge_loop_avoidance())
 }

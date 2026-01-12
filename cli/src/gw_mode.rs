@@ -7,7 +7,7 @@ pub fn cmd_gw_mode() -> Command {
         .alias("gw")
         .about("Display or modify the gateway mode.")
         .long_about("Display or modify the gateway mode.")
-        .override_usage("robctl gw_mode|gw [off|client|server] [sel_class|bandwidth]\n")
+        .override_usage("\trobctl [options] gw_mode|gw [options] [mode] [sel_class|bandwidth]\n")
         .arg(
             Arg::new("mode")
                 .value_name("mode")

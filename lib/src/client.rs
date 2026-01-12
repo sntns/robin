@@ -90,11 +90,31 @@ impl RobinClient {
         commands::count_interfaces(mesh_if).await
     }
 
-    /*pub async fn create_interface(mesh_if: &str, algo: Option<&str>) -> Result<(), RobinError> {
-        commands::create_interface(mesh_if, algo).await
+    pub async fn aggregation(&self, mesh_if: &str) -> Result<bool, RobinError> {
+        commands::get_aggregation(mesh_if).await
     }
 
-    pub async fn destroy_interface(mesh_if: &str) -> Result<(), RobinError> {
-        commands::destroy_interface(mesh_if).await
-    }*/
+    pub async fn set_aggregation(&self, mesh_if: &str, val: bool) -> Result<(), RobinError> {
+        commands::set_aggregation(mesh_if, val).await
+    }
+
+    pub async fn ap_isolation(&self, mesh_if: &str) -> Result<bool, RobinError> {
+        commands::get_ap_isolation(mesh_if).await
+    }
+
+    pub async fn set_ap_isolation(&self, mesh_if: &str, val: bool) -> Result<(), RobinError> {
+        commands::set_ap_isolation(mesh_if, val).await
+    }
+
+    pub async fn bridge_loop_avoidance(&self, mesh_if: &str) -> Result<bool, RobinError> {
+        commands::get_bridge_loop_avoidance(mesh_if).await
+    }
+
+    pub async fn set_bridge_loop_avoidance(
+        &self,
+        mesh_if: &str,
+        val: bool,
+    ) -> Result<(), RobinError> {
+        commands::set_bridge_loop_avoidance(mesh_if, val).await
+    }
 }

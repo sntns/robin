@@ -1,6 +1,9 @@
 use robin;
 
+mod aggregation;
+mod ap_isolation;
 mod app;
+mod bridge_loop_avoidance;
 mod gateways;
 mod gw_mode;
 mod interface;
@@ -165,6 +168,36 @@ async fn main() {
                     }
                 }
                 _ => {}
+            }
+        }
+        Some(("aggregation", sub_m)) => {
+            let val = sub_m.get_one::<u8>("value");
+            if let Some(v) = val {
+                client.set_aggregation(mesh_if, *v == 1).await.unwrap();
+            } else {
+                let enabled = client.aggregation(mesh_if).await.unwrap();
+                println!("{}", enabled as u8);
+            }
+        }
+        Some(("ap_isolation", sub_m)) => {
+            let val = sub_m.get_one::<u8>("value");
+            if let Some(v) = val {
+                client.set_ap_isolation(mesh_if, *v == 1).await.unwrap();
+            } else {
+                let enabled = client.ap_isolation(mesh_if).await.unwrap();
+                println!("{}", enabled as u8);
+            }
+        }
+        Some(("bridge_loop_avoidance", sub_m)) => {
+            let val = sub_m.get_one::<u8>("value");
+            if let Some(v) = val {
+                client
+                    .set_bridge_loop_avoidance(mesh_if, *v == 1)
+                    .await
+                    .unwrap();
+            } else {
+                let enabled = client.bridge_loop_avoidance(mesh_if).await.unwrap();
+                println!("{}", enabled as u8);
             }
         }
         _ => unreachable!("Subcommand required"),

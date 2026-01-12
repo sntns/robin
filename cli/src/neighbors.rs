@@ -11,10 +11,7 @@ pub fn cmd_neighbors() -> Command {
         .alias("n")
         .about("Display the neighbor table.")
         .long_about("Display the neighbor table.")
-        .override_usage(
-            "robctl [options] n\n\
-             robctl [options] neighbors",
-        )
+        .override_usage("\trobctl [options] neighbors|n [options]\n")
         .disable_version_flag(true)
 }
 

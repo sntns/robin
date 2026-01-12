@@ -1,23 +1,16 @@
 use robin::Interface;
 
-use clap::{Arg, ArgMatches, Command};
+use clap::{Arg, Command};
 
 pub fn cmd_interfaces() -> Command {
     Command::new("interface")
         .alias("if")
-        .about("Display or modify the batman-adv interface settings")
-        .long_about(
-            "Display or modify the batman-adv interface settings.\n\
-             \n\
-             Usage:\n\
-             \trobctl if                      # list interfaces\n\
-             \trobctl if add iface1 ...       # add interfaces to mesh\n\
-             \trobctl if del iface1 ...       # remove interfaces from mesh\n\
-             \trobctl if create [routing_algo|ra ALGO]     # create batman-adv interface\n\
-             \trobctl if destroy              # destroy batman-adv interface\n\
-             \n\
-             Options:\n\
-             \t-M  Disable automatic creation/destruction of batman-adv interface",
+        .about("Display or modify the batman-adv interface settings.")
+        .long_about("Display or modify the batman-adv interface settings.")
+        .override_usage(
+            "\trobctl [options] interface|if [options] [add|del iface(s)]\n\
+                    \trobctl [options] interface|if [options] create [routing_algo|ra RA_NAME]\n\
+                    \trobctl [options] interface|if [options] destroy\n",
         )
         .arg(
             Arg::new("manual")
@@ -28,14 +21,16 @@ pub fn cmd_interfaces() -> Command {
         .arg(
             Arg::new("action")
                 .index(1)
+                .value_name("command")
                 .value_parser(["add", "a", "del", "d", "create", "c", "destroy", "D"])
-                .help("Action to perform"),
+                .help("Command name:"),
         )
         .arg(
             Arg::new("params")
                 .index(2)
+                .value_name("parameters")
                 .num_args(0..)
-                .help("Interfaces (add/del) or create parameters (create)"),
+                .help("Interfaces (add/del) or routing algorithm (create)"),
         )
         .disable_version_flag(true)
 }
