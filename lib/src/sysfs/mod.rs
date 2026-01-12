@@ -1,3 +1,3 @@
-mod utils;
+mod sysfs;
 
-pub(crate) use utils::*;
+pub(crate) use sysfs::*;

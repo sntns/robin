@@ -6,6 +6,7 @@ use crate::gw_mode::cmd_gw_mode;
 use crate::interface::cmd_interfaces;
 use crate::neighbors::cmd_neighbors;
 use crate::originators::cmd_originators;
+use crate::routing_algo::cmd_routing_algo;
 use crate::transglobal::cmd_transglobal;
 use crate::translocal::cmd_translocal;
 use clap::{Arg, Command};
@@ -39,4 +40,5 @@ pub fn build_cli() -> Command {
         .subcommand(cmd_ap_isolation())
         .subcommand(cmd_aggregation())
         .subcommand(cmd_bridge_loop_avoidance())
+        .subcommand(cmd_routing_algo())
 }

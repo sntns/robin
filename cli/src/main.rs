@@ -9,9 +9,14 @@ mod gw_mode;
 mod interface;
 mod neighbors;
 mod originators;
+mod routing_algo;
 mod transglobal;
 mod translocal;
 mod utils;
+
+// TODO: do ap_isolation, bridge... and aggregation with netlink like in batctl
+// TODO: add netlink part in routing_algo like in batctl in order to give available algorithms etc
+// TODO: remove get_algo_name in commands/utils.rs after refactoring routing_algo
 
 #[tokio::main]
 async fn main() {
@@ -22,7 +27,7 @@ async fn main() {
         .map(String::as_str)
         .unwrap_or("bat0");
 
-    let algo_name = client.algo_name(mesh_if).await.unwrap();
+    let algo_name = client.get_routing_algo().await.unwrap();
     if matches.get_flag("version") {
         println!(
             "robctl version: {} [{}]",
@@ -175,7 +180,7 @@ async fn main() {
             if let Some(v) = val {
                 client.set_aggregation(mesh_if, *v == 1).await.unwrap();
             } else {
-                let enabled = client.aggregation(mesh_if).await.unwrap();
+                let enabled = client.get_aggregation(mesh_if).await.unwrap();
                 println!("{}", enabled as u8);
             }
         }
@@ -184,7 +189,7 @@ async fn main() {
             if let Some(v) = val {
                 client.set_ap_isolation(mesh_if, *v == 1).await.unwrap();
             } else {
-                let enabled = client.ap_isolation(mesh_if).await.unwrap();
+                let enabled = client.get_ap_isolation(mesh_if).await.unwrap();
                 println!("{}", enabled as u8);
             }
         }
@@ -196,8 +201,16 @@ async fn main() {
                     .await
                     .unwrap();
             } else {
-                let enabled = client.bridge_loop_avoidance(mesh_if).await.unwrap();
+                let enabled = client.get_bridge_loop_avoidance(mesh_if).await.unwrap();
                 println!("{}", enabled as u8);
+            }
+        }
+        Some(("routing_algo", sub_m)) => {
+            if let Some(algo) = sub_m.get_one::<String>("algo") {
+                client.set_routing_algo(algo).await.unwrap();
+            } else {
+                let algo = client.get_routing_algo().await.unwrap();
+                println!("{}", algo);
             }
         }
         _ => unreachable!("Subcommand required"),

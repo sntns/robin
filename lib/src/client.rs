@@ -13,10 +13,6 @@ impl RobinClient {
         commands::get_originators(mesh_if).await
     }
 
-    pub async fn algo_name(&self, mesh_if: &str) -> Result<String, RobinError> {
-        commands::get_algo_name(mesh_if).await
-    }
-
     pub async fn if_nametoindex(&self, ifname: &str) -> Result<u32, RobinError> {
         commands::if_nametoindex(ifname).await
     }
@@ -90,7 +86,7 @@ impl RobinClient {
         commands::count_interfaces(mesh_if).await
     }
 
-    pub async fn aggregation(&self, mesh_if: &str) -> Result<bool, RobinError> {
+    pub async fn get_aggregation(&self, mesh_if: &str) -> Result<bool, RobinError> {
         commands::get_aggregation(mesh_if).await
     }
 
@@ -98,7 +94,7 @@ impl RobinClient {
         commands::set_aggregation(mesh_if, val).await
     }
 
-    pub async fn ap_isolation(&self, mesh_if: &str) -> Result<bool, RobinError> {
+    pub async fn get_ap_isolation(&self, mesh_if: &str) -> Result<bool, RobinError> {
         commands::get_ap_isolation(mesh_if).await
     }
 
@@ -106,7 +102,7 @@ impl RobinClient {
         commands::set_ap_isolation(mesh_if, val).await
     }
 
-    pub async fn bridge_loop_avoidance(&self, mesh_if: &str) -> Result<bool, RobinError> {
+    pub async fn get_bridge_loop_avoidance(&self, mesh_if: &str) -> Result<bool, RobinError> {
         commands::get_bridge_loop_avoidance(mesh_if).await
     }
 
@@ -116,5 +112,13 @@ impl RobinClient {
         val: bool,
     ) -> Result<(), RobinError> {
         commands::set_bridge_loop_avoidance(mesh_if, val).await
+    }
+
+    pub async fn get_routing_algo(&self) -> Result<String, RobinError> {
+        commands::get_routing_algo().await
+    }
+
+    pub async fn set_routing_algo(&self, algo: &str) -> Result<(), RobinError> {
+        commands::set_routing_algo(algo).await
     }
 }
