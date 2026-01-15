@@ -10,7 +10,19 @@ use neli::router::asynchronous::NlRouter;
 use neli::rtnl::{Ifinfomsg, IfinfomsgBuilder};
 use neli::utils::Groups;
 
-/// Utils function to get algo name for a given interface
+/// Retrieves the routing algorithm name associated with a given BATMAN-adv mesh interface.
+///
+/// This function queries the netlink interface for the specified mesh interface and
+/// returns the algorithm name currently in use.
+///
+/// # Arguments
+///
+/// * `mesh_if` - The name of the BATMAN-adv mesh interface.
+///
+/// # Returns
+///
+/// A `String` containing the algorithm name, or a `RobinError` if the interface
+/// cannot be queried or the algorithm name cannot be found.
 pub async fn get_algoname_netlink(mesh_if: &str) -> Result<String, RobinError> {
     let ifindex = if_nametoindex(mesh_if)
         .await
@@ -62,6 +74,19 @@ pub async fn get_algoname_netlink(mesh_if: &str) -> Result<String, RobinError> {
     ))
 }
 
+/// Converts a network interface name to its corresponding interface index (ifindex).
+///
+/// This function uses netlink to enumerate all interfaces and find the index
+/// matching the provided interface name.
+///
+/// # Arguments
+///
+/// * `ifname` - The name of the network interface.
+///
+/// # Returns
+///
+/// The `u32` interface index corresponding to `ifname`, or a `RobinError` if
+/// the interface does not exist or a netlink operation fails.
 pub async fn if_nametoindex(ifname: &str) -> Result<u32, RobinError> {
     let (rtnl, _) = NlRouter::connect(NlFamily::Route, None, Groups::empty())
         .await
@@ -106,6 +131,19 @@ pub async fn if_nametoindex(ifname: &str) -> Result<u32, RobinError> {
     )))
 }
 
+/// Converts a network interface index (ifindex) to its corresponding interface name.
+///
+/// This function uses netlink to enumerate all interfaces and find the name
+/// matching the provided interface index.
+///
+/// # Arguments
+///
+/// * `ifindex` - The index of the network interface.
+///
+/// # Returns
+///
+/// A `String` with the interface name corresponding to `ifindex`, or a `RobinError` if
+/// the interface does not exist or a netlink operation fails.
 pub async fn if_indextoname(ifindex: u32) -> Result<String, RobinError> {
     let (rtnl, _) = NlRouter::connect(NlFamily::Route, None, Groups::empty())
         .await

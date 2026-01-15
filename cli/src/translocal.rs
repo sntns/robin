@@ -6,6 +6,18 @@ use clap::Command;
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::{Cell, CellAlignment, ContentArrangement, Table};
 
+/// Creates the CLI command for displaying the local translation table.
+///
+/// # Returns
+/// - A `clap::Command` configured with:
+///   - Name: `"translocal"`
+///   - Alias: `"tl"`
+///   - Short and long description: `"Display local translation table."`
+///   - Usage override:
+///       ```text
+///       robctl [options] translocal|tl [options]
+///       ```
+///   - Version flag disabled
 pub fn cmd_translocal() -> Command {
     Command::new("translocal")
         .alias("tl")
@@ -15,6 +27,19 @@ pub fn cmd_translocal() -> Command {
         .disable_version_flag(true)
 }
 
+/// Pretty-prints a list of `TranslocalEntry` into a table.
+///
+/// # Arguments
+/// - `entries`: Slice of `TranslocalEntry` to display
+///
+/// # Table columns
+/// - `Client`: MAC address of the client
+/// - `VID`: VLAN ID
+/// - `Flags`: Concatenation of client flags:
+///     - `R` = ROAM, `P` = NOPURGE, `N` = NEW, `X` = PENDING,
+///       `W` = WIFI, `I` = ISOLA; `.` if flag not set
+/// - `Last seen`: Time since last seen, in seconds.milliseconds
+/// - `CRC32`: CRC32 checksum in hexadecimal
 pub fn print_translocal(entries: &[TranslocalEntry]) {
     let mut table = Table::new();
     table

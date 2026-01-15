@@ -4,6 +4,15 @@ use clap::Command;
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::{Cell, CellAlignment, ContentArrangement, Table};
 
+/// Creates the CLI command for displaying the list of gateways.
+///
+/// # Returns
+/// - A `clap::Command` configured with:
+///   - Name: `"gateways"`
+///   - Alias: `"gwl"`
+///   - Short and long description: `"Display the list of gateways."`
+///   - Usage override: `robctl [options] gateways|gwl [options]`
+///   - Version flag disabled
 pub fn cmd_gateways() -> Command {
     Command::new("gateways")
         .alias("gwl")
@@ -13,6 +22,18 @@ pub fn cmd_gateways() -> Command {
         .disable_version_flag(true)
 }
 
+/// Prints a formatted table of gateways to the console.
+///
+/// # Arguments
+/// - `entries`: Slice of `Gateway` entries to display.
+/// - `algo_name`: Name of the BATMAN algorithm used (`"BATMAN_IV"` or `"BATMAN_V"`).
+///
+/// # Behavior
+/// - Configures the table headers differently depending on the algorithm:
+///   - `"BATMAN_IV"`: Router, TQ, Next Hop, OutgoingIF, Bandwidth Down, Bandwidth Up
+///   - `"BATMAN_V"`: Router, Throughput, Next Hop, OutgoingIF, Bandwidth Down, Bandwidth Up
+/// - Highlights the best gateway with an asterisk (`*`) before the MAC address.
+/// - Displays optional fields (`TQ`, `Throughput`, Bandwidth) with `0` if missing.
 pub fn print_gwl(entries: &[Gateway], algo_name: &str) {
     let mut table = Table::new();
     table

@@ -8,7 +8,28 @@ use neli::consts::nl::{NlmF, Nlmsg};
 use neli::genl::Genlmsghdr;
 use neli::nl::{NlPayload, Nlmsghdr};
 
-/// Neighbors (batctl n)
+/// Retrieves the list of neighbors for a BATMAN-adv mesh interface.
+///
+/// This corresponds to the `batctl n` command. Each neighbor entry contains
+/// the neighbor's MAC address, the outgoing interface used to reach it,
+/// the last time it was seen in milliseconds, and optionally the throughput in kb/s.
+///
+/// # Arguments
+///
+/// * `mesh_if` - The name of the mesh interface (e.g., `"bat0"`).
+///
+/// # Returns
+///
+/// Returns a vector of `Neighbor` structs or a `RobinError` if the query fails.
+///
+/// # Example
+///
+/// ```no_run
+/// let neighbors = get_neighbors("bat0").await?;
+/// for n in neighbors {
+///     println!("Neighbor {} via {} (last seen {} ms)", n.neigh, n.outgoing_if, n.last_seen_ms);
+/// }
+/// ```
 pub async fn get_neighbors(mesh_if: &str) -> Result<Vec<Neighbor>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
     let ifindex = if_nametoindex(mesh_if).await.map_err(|e| {

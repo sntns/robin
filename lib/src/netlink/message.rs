@@ -6,24 +6,20 @@ use neli::genl::{Genlmsghdr, GenlmsghdrBuilder};
 use neli::nl::{NlPayload, Nlmsghdr, NlmsghdrBuilder};
 use neli::types::{Buffer, GenlBuffer};
 
-// Netlink message structure :
-// Header Netlink (Nlmsghdr)
-// 	•	Message type = family_id (ex : batadv)
-// 	•	Flags = NLM_F_REQUEST
-// 	•	Payload = a Genlmsghdr
-//
-// Header Generic Netlink (Genlmsghdr)
-// 	•	cmd = ex BatadvCmdGetOriginators
-// 	•	version = 1
-// 	•	attributes = NLA attribute list
-//
-// NLA attributes :
-//  must contain BatadvAttrMeshIfname = "bat0\0"
-//  and can contain anything from attribute which can be completed from
-//  usr/src/linux-headers-$(uname -r)/include/uapi/linux/batman_adv.h
-//  see attribute for corresponding attrs in robin
-
-/// Create a Netlink (Genl) message for the given command with the given attributes
+/// Builds a Generic Netlink message for a given BATMAN-adv command.
+///
+/// # Parameters
+/// - `cmd`: The `Command` to send (e.g., `BatadvCmdGetOriginators`).
+/// - `attrs`: A `GenlBuffer` containing all attributes to include in the message.
+///
+/// # Returns
+/// - `Ok(Genlmsghdr<u8, u16>)` containing the constructed Generic Netlink header with payload.
+/// - `Err(RobinError)` if building the GENL header fails.
+///
+/// # Notes
+/// The `attrs` should include at least the mesh interface index or name (`BatadvAttrMeshIfindex`
+/// or `BatadvAttrMeshIfname`) as required by BATMAN-adv. Additional attributes can be added
+/// according to the BATMAN-adv API.
 pub fn build_genl_msg(
     cmd: Command,
     attrs: GenlBuffer<u16, Buffer>,
@@ -39,7 +35,22 @@ pub fn build_genl_msg(
     Ok(genl_msg)
 }
 
-/// Create a Netlink (Nl) message for the given command with the given attributes
+/// Builds a full Netlink message wrapping a Generic Netlink message.
+///
+/// # Parameters
+/// - `family_id`: The numeric ID of the Generic Netlink family (e.g., BATMAN-adv).
+/// - `cmd`: The `Command` to send.
+/// - `attrs`: Attributes to include in the message.
+/// - `seq`: Sequence number for tracking the Netlink message.
+///
+/// # Returns
+/// - `Ok(Nlmsghdr<u16, Genlmsghdr<u8, u16>>)` ready to be sent via a Netlink socket.
+/// - `Err(RobinError)` if building either the GENL or NL headers fails.
+///
+/// # Notes
+/// - Sets `NLM_F_REQUEST | NLM_F_DUMP` flags: `REQUEST` signals a request, `DUMP` is for
+///   multi-entry responses.
+/// - `nl_pid` is set to 0 so the kernel fills in the sender PID automatically.
 pub fn build_nl_msg(
     family_id: u16,
     cmd: Command,

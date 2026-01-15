@@ -7,7 +7,19 @@ use neli::consts::nl::{NlmF, Nlmsg};
 use neli::genl::Genlmsghdr;
 use neli::nl::{NlPayload, Nlmsghdr};
 
-/// Get gateway (batctl gw)
+/// Retrieves the current gateway settings for a BATMAN-adv mesh interface.
+///
+/// This includes the gateway mode, selection class, configured upstream/downstream
+/// bandwidth, and the routing algorithm used.
+///
+/// # Arguments
+///
+/// * `mesh_if` - The name of the BATMAN-adv mesh interface (e.g., "bat0").
+///
+/// # Returns
+///
+/// Returns a `GatewayInfo` struct containing the mode, selection class, bandwidths,
+/// and routing algorithm, or a `RobinError` if the information could not be retrieved.
 pub async fn get_gateway(mesh_if: &str) -> Result<GatewayInfo, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
     let ifindex = if_nametoindex(mesh_if)
@@ -83,7 +95,23 @@ pub async fn get_gateway(mesh_if: &str) -> Result<GatewayInfo, RobinError> {
     })
 }
 
-/// Set gateway (batctl gw [mode] [sel_class|bandwidth])
+/// Configures the gateway settings for a BATMAN-adv mesh interface.
+///
+/// This function allows setting the gateway mode (Off, Client, or Server) and optionally
+/// the upstream/downstream bandwidth and selection class when in Server mode.
+///
+/// # Arguments
+///
+/// * `mode` - The gateway mode to set (`GwMode::Off`, `GwMode::Client`, `GwMode::Server`).
+/// * `down` - Optional downstream bandwidth in Mbps (used when mode is Server).
+/// * `up` - Optional upstream bandwidth in Mbps (used when mode is Server).
+/// * `sel_class` - Optional selection class (used when mode is Server).
+/// * `mesh_if` - The name of the BATMAN-adv mesh interface (e.g., "bat0").
+///
+/// # Returns
+///
+/// Returns `Ok(())` if the settings were applied successfully, or a `RobinError` if
+/// the operation failed or was rejected by the kernel.
 pub async fn set_gateway(
     mode: GwMode,
     down: Option<u32>,

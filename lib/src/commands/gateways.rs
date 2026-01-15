@@ -8,7 +8,29 @@ use neli::consts::nl::{NlmF, Nlmsg};
 use neli::genl::Genlmsghdr;
 use neli::nl::{NlPayload, Nlmsghdr};
 
-/// Gateways list (batctl gwl)
+/// Retrieves the list of gateways known to a BATMAN-adv mesh interface.
+///
+/// This corresponds to the `batctl gwl` command. Each entry contains information
+/// about the gateway's MAC address, associated router, outgoing interface, bandwidth,
+/// throughput, TQ (routing metric), and whether it is currently marked as the best gateway.
+///
+/// # Arguments
+///
+/// * `mesh_if` - The name of the BATMAN-adv mesh interface (e.g., `"bat0"`).
+///
+/// # Returns
+///
+/// Returns a vector of `Gateway` structs representing all gateways the mesh node is aware of,
+/// or a `RobinError` if the information could not be retrieved or parsed.
+///
+/// # Example
+///
+/// ```no_run
+/// let gateways = get_gateways_list("bat0").await?;
+/// for gw in gateways {
+///     println!("Gateway {} via {} (best: {})", gw.mac_addr, gw.outgoing_if, gw.is_best);
+/// }
+/// ```
 pub async fn get_gateways_list(mesh_if: &str) -> Result<Vec<Gateway>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
     let ifindex = if_nametoindex(mesh_if)

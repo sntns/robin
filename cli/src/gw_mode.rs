@@ -2,6 +2,18 @@ use crate::robin::{GatewayInfo, GwMode, RobinError};
 
 use clap::{Arg, Command};
 
+/// Creates the CLI command for displaying or modifying the gateway mode.
+///
+/// # Returns
+/// - A `clap::Command` configured with:
+///   - Name: `"gw_mode"`
+///   - Alias: `"gw"`
+///   - Short and long description: `"Display or modify the gateway mode."`
+///   - Usage override: `robctl [options] gw_mode|gw [options] [mode] [sel_class|bandwidth]`
+///   - Optional positional arguments:
+///     - `"mode"`: Gateway mode (`off`, `client`, or `server`)
+///     - `"param"`: Gateway parameter (selection class or bandwidth)
+///   - Version flag disabled
 pub fn cmd_gw_mode() -> Command {
     Command::new("gw_mode")
         .alias("gw")
@@ -23,6 +35,18 @@ pub fn cmd_gw_mode() -> Command {
         .disable_version_flag(true)
 }
 
+/// Prints a human-readable representation of the current gateway configuration.
+///
+/// # Arguments
+/// - `info`: `GatewayInfo` struct containing mode, algorithm, selection class, and bandwidth.
+///
+/// # Behavior
+/// - Displays different formats depending on the `GwMode`:
+///   - `Off`: prints `"off"`
+///   - `Client`: prints `"client (selection class: ... MBit)"`
+///   - `Server`: prints `"server (announced bw: down/up MBit)"`
+///   - `Unknown`: prints `"unknown"`
+/// - For BATMAN_V algorithm, selection class is printed with one decimal place.
 pub fn print_gw(info: &GatewayInfo) {
     match info.mode {
         GwMode::Off => {
@@ -57,6 +81,22 @@ pub fn print_gw(info: &GatewayInfo) {
     }
 }
 
+/// Parses a gateway parameter string according to the gateway mode.
+///
+/// # Arguments
+/// - `mode`: The `GwMode` to interpret the parameter for.
+/// - `param`: The parameter string, e.g., selection class or bandwidth (`"1000/500"`).
+///
+/// # Returns
+/// - `Ok((Option<down>, Option<up>, Option<sel_class>))`
+///   - `down` and `up` are bandwidth values in kbit for `Server` mode.
+///   - `sel_class` is used for `Client` mode.
+///   - `None` values for `Off` mode.
+/// - `Err(RobinError)` if parsing fails or mode is `Unknown`.
+///
+/// # Notes
+/// - For server mode, the `param` can be `"down/up"` and supports optional `"kbit"` or `"MBit"` suffix.
+/// - For client mode, `param` is parsed as a selection class integer.
 pub fn parse_gw_param(
     mode: GwMode,
     param: &str,

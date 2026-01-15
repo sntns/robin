@@ -14,6 +14,48 @@ mod transglobal;
 mod translocal;
 mod utils;
 
+/// Main entry point for the `robctl` CLI application.
+///
+/// This function initializes the `RobinClient`, parses command-line arguments using `clap`,
+/// and dispatches subcommands to their corresponding handlers. It supports both
+/// display and modification of batman-adv mesh network settings.
+///
+/// # Global Options
+/// - `--meshif`, `-m` : Batman-adv mesh interface to operate on (default: `bat0`).
+/// - `--version`, `-v` : Print `robctl` version and batman-adv kernel module version.
+///
+/// # Subcommands
+/// - `neighbors` (`n`) : Display the neighbor table.
+/// - `gateways` (`gwl`) : Display the list of gateways.
+/// - `gw_mode` (`gw`) : Display or modify the gateway mode. Accepts `off`, `client`, or `server`.
+/// - `originators` (`o`) : Display the originator table.
+/// - `translocal` (`tl`) : Display local translation table.
+/// - `transglobal` (`tg`) : Display global translation table.
+/// - `interface` (`if`) : Display or modify batman-adv interface settings. Supports `add`, `del`, `create`, and `destroy`.
+/// - `aggregation` (`ag`) : Display or modify aggregation setting (0 = disable, 1 = enable).
+/// - `ap_isolation` (`ap`) : Display or modify AP isolation setting (0 = disable, 1 = enable).
+/// - `bridge_loop_avoidance` (`bl`) : Display or modify bridge loop avoidance setting (0 = disable, 1 = enable).
+/// - `routing_algo` (`ra`) : Display or modify the routing algorithm.
+///
+/// # Behavior
+/// 1. If the `--version` flag is set, prints the `robctl` version and default routing algorithm, then exits.
+/// 2. Subcommands are dispatched asynchronously via the `RobinClient`.
+/// 3. For modification commands (e.g., `gw_mode`, `aggregation`, `ap_isolation`), values are parsed and sent to the mesh interface.
+/// 4. For display commands (e.g., `neighbors`, `originators`), tables are printed using `comfy_table`.
+/// 5. Interface commands handle automatic creation/destruction unless the `-M` flag is set.
+///
+/// # Panics
+/// The function uses `.unwrap()` extensively for simplicity; in a production application,
+/// proper error handling should replace unwraps to avoid panics.
+///
+/// # Example
+/// ```no_run
+/// // Display neighbors on the default interface:
+/// robctl neighbors
+///
+/// // Set gateway mode to client on interface bat0:
+/// robctl gw_mode client 50
+/// ```
 #[tokio::main]
 async fn main() {
     let client = robin::RobinClient::new();

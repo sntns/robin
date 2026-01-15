@@ -7,6 +7,16 @@ use neli::consts::nl::NlmF;
 use neli::genl::Genlmsghdr;
 use neli::nl::Nlmsghdr;
 
+/// Retrieves the current state of bridge loop avoidance for a BATMAN-adv mesh interface.
+///
+/// # Arguments
+///
+/// * `mesh_if` - The name of the BATMAN-adv mesh interface (e.g., "bat0").
+///
+/// # Returns
+///
+/// Returns `Ok(true)` if bridge loop avoidance is enabled, `Ok(false)` if disabled,
+/// or a `RobinError` if the value could not be retrieved.
 pub async fn get_bridge_loop_avoidance(mesh_if: &str) -> Result<bool, RobinError> {
     let ifindex = if_nametoindex(mesh_if)
         .await
@@ -59,6 +69,16 @@ pub async fn get_bridge_loop_avoidance(mesh_if: &str) -> Result<bool, RobinError
     ))
 }
 
+/// Enables or disables bridge loop avoidance for a BATMAN-adv mesh interface.
+///
+/// # Arguments
+///
+/// * `mesh_if` - The name of the BATMAN-adv mesh interface (e.g., "bat0").
+/// * `enabled` - `true` to enable bridge loop avoidance, `false` to disable.
+///
+/// # Returns
+///
+/// Returns `Ok(())` if the operation succeeds, or a `RobinError` if it fails.
 pub async fn set_bridge_loop_avoidance(mesh_if: &str, enabled: bool) -> Result<(), RobinError> {
     let ifindex = if_nametoindex(mesh_if)
         .await

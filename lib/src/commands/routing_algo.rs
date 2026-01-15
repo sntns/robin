@@ -15,6 +15,13 @@ use neli::rtnl::{Ifinfomsg, IfinfomsgBuilder};
 use neli::utils::Groups;
 use std::fs;
 
+/// Returns the default routing algorithm configured for BATMAN-adv.
+///
+/// Reads the value from `/sys/module/batman_adv/parameters/routing_algo`.
+///
+/// # Returns
+///
+/// A `String` representing the default routing algorithm, or a `RobinError` if reading fails.
 pub async fn get_default_routing_algo() -> Result<String, RobinError> {
     let path = "/sys/module/batman_adv/parameters/routing_algo";
 
@@ -28,6 +35,17 @@ pub async fn get_default_routing_algo() -> Result<String, RobinError> {
     Ok(content.trim().to_string())
 }
 
+/// Returns a list of currently active BATMAN-adv mesh interfaces and their routing algorithms.
+///
+/// Each entry is a tuple `(mesh_interface_name, algorithm_name)`.
+///
+/// # Returns
+///
+/// A vector of tuples, or a `RobinError` if querying fails.
+///
+/// # Notes
+///
+/// Only interfaces of kind `"batadv"` are included.
 pub async fn get_active_routing_algos() -> Result<Vec<(String, String)>, RobinError> {
     let (rtnl, _) = NlRouter::connect(NlFamily::Route, None, Groups::empty())
         .await
@@ -92,6 +110,13 @@ pub async fn get_active_routing_algos() -> Result<Vec<(String, String)>, RobinEr
     Ok(result)
 }
 
+/// Returns all routing algorithms available in the kernel module.
+///
+/// Queries BATMAN-adv via netlink to list all supported routing algorithms.
+///
+/// # Returns
+///
+/// A vector of algorithm names as `String`s, or a `RobinError` if none are found or the query fails.
 pub async fn get_available_routing_algos() -> Result<Vec<String>, RobinError> {
     let msg = netlink::build_genl_msg(
         Command::BatadvCmdGetRoutingAlgos,
@@ -137,6 +162,18 @@ pub async fn get_available_routing_algos() -> Result<Vec<String>, RobinError> {
     Ok(algos)
 }
 
+/// Sets the default routing algorithm for BATMAN-adv.
+///
+/// Writes the specified algorithm name to
+/// `/sys/module/batman_adv/parameters/routing_algo`.
+///
+/// # Arguments
+///
+/// * `algo` - The name of the routing algorithm to set as default.
+///
+/// # Returns
+///
+/// Returns `()` on success, or a `RobinError` if writing fails.
 pub async fn set_default_routing_algo(algo: &str) -> Result<(), RobinError> {
     let path = "/sys/module/batman_adv/parameters/routing_algo";
 

@@ -10,7 +10,32 @@ use neli::genl::Genlmsghdr;
 use neli::nl::NlPayload;
 use neli::nl::Nlmsghdr;
 
-/// Originators (batctl o)
+/// Retrieves the list of originators for a BATMAN-adv mesh interface.
+///
+/// This corresponds to the `batctl o` command. Each originator entry includes
+/// the originator's MAC address, the next-hop neighbor MAC, the outgoing interface,
+/// the last seen timestamp in milliseconds, optional TQ (link quality) and throughput,
+/// and a flag indicating if this originator is currently the best route.
+///
+/// # Arguments
+///
+/// * `mesh_if` - The name of the mesh interface (e.g., `"bat0"`).
+///
+/// # Returns
+///
+/// Returns a vector of `Originator` structs or a `RobinError` if the query fails.
+///
+/// # Example
+///
+/// ```no_run
+/// let originators = get_originators("bat0").await?;
+/// for o in originators {
+///     println!(
+///         "Originator {} via {} (last seen {} ms, best: {})",
+///         o.originator, o.outgoing_if, o.last_seen_ms, o.is_best
+///     );
+/// }
+/// ```
 pub async fn get_originators(mesh_if: &str) -> Result<Vec<Originator>, RobinError> {
     // Create the value and the attribute
     let mut attrs = netlink::GenlAttrBuilder::new();

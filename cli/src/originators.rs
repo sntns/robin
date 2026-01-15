@@ -4,6 +4,18 @@ use clap::Command;
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::{Cell, CellAlignment, ContentArrangement, Table};
 
+/// Creates the CLI command for displaying the originator table.
+///
+/// # Returns
+/// - A `clap::Command` configured with:
+///   - Name: `"originators"`
+///   - Alias: `"o"`
+///   - Short and long description: `"Display the originator table."`
+///   - Usage override:
+///       ```text
+///       robctl [options] originators|o [options]
+///       ```
+///   - Version flag disabled
 pub fn cmd_originators() -> Command {
     Command::new("originators")
         .alias("o")
@@ -13,6 +25,21 @@ pub fn cmd_originators() -> Command {
         .disable_version_flag(true)
 }
 
+/// Prints a formatted originator table.
+///
+/// # Arguments
+/// - `entries`: Slice of `Originator` entries.
+/// - `algo_name`: Name of the routing algorithm (BATMAN_IV or BATMAN_V).
+///
+/// # Behavior
+/// - For BATMAN_IV:
+///     - Columns: `"Originator"`, `"Last seen"`, `"TQ"`, `"Next hop"`, `"Outgoing IF"`
+///     - TQ is displayed as `value/255`
+/// - For BATMAN_V:
+///     - Columns: `"Originator"`, `"Last seen"`, `"Throughput (Mbit/s)"`, `"Next hop"`, `"Outgoing IF"`
+///     - Throughput is converted from kbit/s to Mbit with one decimal place
+/// - Marks best originators with a `*` prefix.
+/// - `last_seen_ms` is formatted as seconds with milliseconds precision.
 pub fn print_originators(entries: &[Originator], algo_name: &str) {
     let mut table = Table::new();
     table

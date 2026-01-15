@@ -10,6 +10,28 @@ use neli::genl::Genlmsghdr;
 use neli::nl::NlPayload;
 use neli::nl::Nlmsghdr;
 
+/// Retrieves the global translation table (TT) entries for a given BATMAN-adv mesh interface.
+///
+/// This corresponds to the `batctl tg` command and returns information about all known clients
+/// and their originators in the mesh network.
+///
+/// # Arguments
+///
+/// * `mesh_if` - The name of the BATMAN-adv mesh interface to query.
+///
+/// # Returns
+///
+/// A vector of `TransglobalEntry` structs, each containing:
+/// - `client`: The MAC address of the client.
+/// - `orig`: The originator MAC address for the client.
+/// - `vid`: The VLAN ID associated with the client.
+/// - `ttvn`: The current translation table version for this client.
+/// - `last_ttvn`: The last observed translation table version.
+/// - `flags`: Client flags (e.g., roaming, isolated).
+/// - `crc32`: CRC32 checksum of the entry.
+/// - `is_best`: Indicates if this entry is marked as the "best" path.
+///
+/// Returns a `RobinError` if any netlink operation or parsing fails.
 pub async fn get_transglobal(mesh_if: &str) -> Result<Vec<TransglobalEntry>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
     let ifindex = if_nametoindex(mesh_if)

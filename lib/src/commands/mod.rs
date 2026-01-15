@@ -1,3 +1,10 @@
+//! Commands module for Robin CLI.
+//!
+//! This module contains all the subcommand implementations, including
+//! batman-adv settings, translation tables, routing, and mesh interface management.
+//! Each submodule provides both the `clap::Command` for CLI parsing
+//! and helper functions for formatting or printing the output.
+
 mod aggregation;
 mod ap_isolation;
 mod bridge_loop_avoidance;

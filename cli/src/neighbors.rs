@@ -6,6 +6,18 @@ use comfy_table::{Cell, CellAlignment, ContentArrangement, Table};
 use macaddr::MacAddr6;
 use std::collections::HashMap;
 
+/// Creates the CLI command for displaying the neighbor table.
+///
+/// # Returns
+/// - A `clap::Command` configured with:
+///   - Name: `"neighbors"`
+///   - Alias: `"n"`
+///   - Short and long description: `"Display the neighbor table."`
+///   - Usage override:
+///       ```text
+///       robctl [options] neighbors|n [options]
+///       ```
+///   - Version flag disabled
 pub fn cmd_neighbors() -> Command {
     Command::new("neighbors")
         .alias("n")
@@ -15,6 +27,14 @@ pub fn cmd_neighbors() -> Command {
         .disable_version_flag(true)
 }
 
+/// Deduplicates neighbors based on `(neighbor MAC, outgoing interface)`.
+///
+/// # Arguments
+/// - `neighbors`: A vector of `Neighbor` entries.
+///
+/// # Behavior
+/// - If multiple entries exist for the same `(MAC, interface)`, keeps the one with the **latest `last_seen_ms`**.
+/// - Returns a deduplicated `Vec<Neighbor>`.
 pub fn dedup_neighbors(neighbors: Vec<Neighbor>) -> Vec<Neighbor> {
     let mut map: HashMap<(MacAddr6, String), Neighbor> = HashMap::new();
 
@@ -35,6 +55,19 @@ pub fn dedup_neighbors(neighbors: Vec<Neighbor>) -> Vec<Neighbor> {
     map.into_values().collect()
 }
 
+/// Prints a neighbor table in a human-readable format.
+///
+/// # Arguments
+/// - `entries`: Slice of `Neighbor` entries.
+/// - `algo_name`: Name of the routing algorithm (BATMAN_IV or BATMAN_V).
+///
+/// # Behavior
+/// - For BATMAN_IV:
+///     - Columns: `"IF"`, `"Neighbor"`, `"Last seen"`
+/// - For BATMAN_V:
+///     - Columns: `"Neighbor"`, `"Last seen"`, `"Speed (Mbit/s)"`, `"IF"`
+/// - Deduplicates entries before printing.
+/// - `last_seen_ms` is formatted as seconds with milliseconds precision.
 pub fn print_neighbors(entries: &[Neighbor], algo_name: &str) {
     let mut table = Table::new();
     table

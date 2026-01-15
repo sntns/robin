@@ -15,6 +15,23 @@ use neli::rtnl::{Ifinfomsg, IfinfomsgBuilder, RtattrBuilder};
 use neli::types::{Buffer, RtBuffer};
 use neli::utils::Groups;
 
+/// Counts the number of physical or virtual interfaces attached to a BATMAN-adv mesh interface.
+///
+/// # Arguments
+///
+/// * `mesh_if` - The name of the mesh interface (e.g., `"bat0"`).
+///
+/// # Returns
+///
+/// Returns the number of interfaces currently enslaved to the given mesh interface,
+/// or a `RobinError` if the query fails.
+///
+/// # Example
+///
+/// ```no_run
+/// let count = count_interfaces("bat0").await?;
+/// println!("Number of interfaces: {}", count);
+/// ```
 pub async fn count_interfaces(mesh_if: &str) -> Result<u32, RobinError> {
     let mesh_ifindex = if_nametoindex(mesh_if).await.map_err(|e| {
         RobinError::Netlink(format!("Failed to get ifindex for {}: {:?}", mesh_if, e))
@@ -60,7 +77,27 @@ pub async fn count_interfaces(mesh_if: &str) -> Result<u32, RobinError> {
     Ok(count)
 }
 
-/// Interfaces (batctl if)
+/// Retrieves the list of interfaces associated with a BATMAN-adv mesh interface.
+///
+/// This corresponds to the `batctl if` command. Each entry contains the interface name
+/// and whether it is currently active.
+///
+/// # Arguments
+///
+/// * `mesh_if` - The name of the mesh interface.
+///
+/// # Returns
+///
+/// Returns a vector of `Interface` structs or a `RobinError` if the query fails.
+///
+/// # Example
+///
+/// ```no_run
+/// let ifaces = get_interfaces("bat0").await?;
+/// for iface in ifaces {
+///     println!("Interface {} active: {}", iface.ifname, iface.active);
+/// }
+/// ```
 pub async fn get_interfaces(mesh_if: &str) -> Result<Vec<Interface>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
     let mesh_ifindex = if_nametoindex(mesh_if).await.map_err(|e| {
@@ -142,7 +179,25 @@ pub async fn get_interfaces(mesh_if: &str) -> Result<Vec<Interface>, RobinError>
     Ok(interfaces)
 }
 
-/// Add and del interfaces from the batadv interface (batctl if add/del ...)
+/// Adds or removes a physical interface from a BATMAN-adv mesh interface.
+///
+/// This corresponds to `batctl if add` or `batctl if del`.
+///
+/// # Arguments
+///
+/// * `iface` - The name of the interface to add or remove.
+/// * `mesh_if` - Optional mesh interface name to attach to. `None` removes it from any mesh.
+///
+/// # Returns
+///
+/// Returns `Ok(())` on success, or a `RobinError` if the operation fails.
+///
+/// # Example
+///
+/// ```no_run
+/// set_interface("eth0", Some("bat0")).await?;
+/// set_interface("eth0", None).await?; // remove from mesh
+/// ```
 pub async fn set_interface(iface: &str, mesh_if: Option<&str>) -> Result<(), RobinError> {
     let iface_ifindex = if_nametoindex(iface).await.map_err(|e| {
         RobinError::Netlink(format!("Failed to get ifindex for {}: {:?}", iface, e))
@@ -191,6 +246,24 @@ pub async fn set_interface(iface: &str, mesh_if: Option<&str>) -> Result<(), Rob
     Ok(())
 }
 
+/// Creates a new BATMAN-adv mesh interface.
+///
+/// Optionally, a routing algorithm can be specified. This corresponds to `ip link add type batadv`.
+///
+/// # Arguments
+///
+/// * `mesh_if` - The name of the mesh interface to create.
+/// * `routing_algo` - Optional routing algorithm name (e.g., `"BATMAN_IV"`).
+///
+/// # Returns
+///
+/// Returns `Ok(())` on success, or a `RobinError` if creation fails.
+///
+/// # Example
+///
+/// ```no_run
+/// create_interface("bat0", Some("BATMAN_IV")).await?;
+/// ```
 pub async fn create_interface(mesh_if: &str, routing_algo: Option<&str>) -> Result<(), RobinError> {
     const IFLA_BATADV_ALGO_NAME: u16 = 1;
     let (rtnl, _) = NlRouter::connect(NlFamily::Route, None, Groups::empty())
@@ -261,6 +334,23 @@ pub async fn create_interface(mesh_if: &str, routing_algo: Option<&str>) -> Resu
     Ok(())
 }
 
+/// Destroys an existing BATMAN-adv mesh interface.
+///
+/// This corresponds to `ip link delete <mesh_if>`.
+///
+/// # Arguments
+///
+/// * `mesh_if` - The name of the mesh interface to destroy.
+///
+/// # Returns
+///
+/// Returns `Ok(())` on success, or a `RobinError` if destruction fails.
+///
+/// # Example
+///
+/// ```no_run
+/// destroy_interface("bat0").await?;
+/// ```
 pub async fn destroy_interface(mesh_if: &str) -> Result<(), RobinError> {
     let (rtnl, _) = NlRouter::connect(NlFamily::Route, None, Groups::empty())
         .await
