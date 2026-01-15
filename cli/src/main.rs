@@ -15,8 +15,7 @@ mod translocal;
 mod utils;
 
 // TODO: do ap_isolation, bridge... and aggregation with netlink like in batctl
-// TODO: add netlink part in routing_algo like in batctl in order to give available algorithms etc
-// TODO: remove get_algo_name in commands/utils.rs after refactoring routing_algo
+// TODO: do loglevel command
 
 #[tokio::main]
 async fn main() {
@@ -27,7 +26,7 @@ async fn main() {
         .map(String::as_str)
         .unwrap_or("bat0");
 
-    let algo_name = client.get_routing_algo().await.unwrap();
+    let algo_name = client.get_default_routing_algo().await.unwrap();
     if matches.get_flag("version") {
         println!(
             "robctl version: {} [{}]",
@@ -206,11 +205,32 @@ async fn main() {
             }
         }
         Some(("routing_algo", sub_m)) => {
-            if let Some(algo) = sub_m.get_one::<String>("algo") {
-                client.set_routing_algo(algo).await.unwrap();
-            } else {
-                let algo = client.get_routing_algo().await.unwrap();
-                println!("{}", algo);
+            let param = sub_m.get_one::<String>("value");
+            if let Some(algo) = param {
+                client.set_default_routing_algo(algo).await.unwrap();
+                return;
+            }
+
+            // Active routing algos
+            let active = client.get_active_routing_algos().await.unwrap();
+            if !active.is_empty() {
+                println!("Active routing protocol configuration:");
+                for (iface, algo) in &active {
+                    println!(" * {}: {}", iface, algo);
+                }
+                println!();
+            }
+
+            // Default routing algo
+            let default_algo = client.get_default_routing_algo().await.unwrap();
+            println!("Selected routing algorithm (used when next batX interface is created):");
+            println!(" => {}\n", default_algo);
+
+            // Available routing algos
+            let available = client.get_available_routing_algos().await.unwrap();
+            println!("Available routing algorithms:");
+            for algo in available {
+                println!(" * {}", algo);
             }
         }
         _ => unreachable!("Subcommand required"),

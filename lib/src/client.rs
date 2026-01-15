@@ -114,11 +114,19 @@ impl RobinClient {
         commands::set_bridge_loop_avoidance(mesh_if, val).await
     }
 
-    pub async fn get_routing_algo(&self) -> Result<String, RobinError> {
-        commands::get_routing_algo().await
+    pub async fn get_default_routing_algo(&self) -> Result<String, RobinError> {
+        commands::get_default_routing_algo().await
     }
 
-    pub async fn set_routing_algo(&self, algo: &str) -> Result<(), RobinError> {
-        commands::set_routing_algo(algo).await
+    pub async fn get_active_routing_algos(&self) -> Result<Vec<(String, String)>, RobinError> {
+        commands::get_active_routing_algos().await
+    }
+
+    pub async fn get_available_routing_algos(&self) -> Result<Vec<String>, RobinError> {
+        commands::get_available_routing_algos().await
+    }
+
+    pub async fn set_default_routing_algo(&self, algo: &str) -> Result<(), RobinError> {
+        commands::set_default_routing_algo(algo).await
     }
 }

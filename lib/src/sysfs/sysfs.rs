@@ -19,19 +19,3 @@ pub fn write_mesh_bool(mesh_if: &str, name: &str, value: bool) -> Result<(), Rob
         .map_err(|e| RobinError::Io(format!("{}: {:?}", path, e)))?;
     Ok(())
 }
-
-fn routing_algo_path() -> String {
-    "/sys/module/batman_adv/parameters/routing_algo".into()
-}
-
-pub async fn read_routing_algo() -> Result<String, RobinError> {
-    let val = fs::read_to_string(routing_algo_path())
-        .map_err(|e| RobinError::Io(format!("routing_algo: {:?}", e)))?;
-    Ok(val.trim().to_string())
-}
-
-pub async fn write_routing_algo(algo: &str) -> Result<(), RobinError> {
-    fs::write(routing_algo_path(), algo)
-        .map_err(|e| RobinError::Io(format!("routing_algo: {:?}", e)))?;
-    Ok(())
-}

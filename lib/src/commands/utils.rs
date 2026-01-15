@@ -10,8 +10,8 @@ use neli::router::asynchronous::NlRouter;
 use neli::rtnl::{Ifinfomsg, IfinfomsgBuilder};
 use neli::utils::Groups;
 
-/// Utils function to get algo name
-pub async fn get_algo_name(mesh_if: &str) -> Result<String, RobinError> {
+/// Utils function to get algo name for a given interface
+pub async fn get_algoname_netlink(mesh_if: &str) -> Result<String, RobinError> {
     let ifindex = if_nametoindex(mesh_if)
         .await
         .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
