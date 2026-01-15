@@ -14,7 +14,6 @@ mod transglobal;
 mod translocal;
 mod utils;
 
-// TODO: do ap_isolation, bridge... and aggregation with netlink like in batctl
 // TODO: do loglevel command
 
 #[tokio::main]
@@ -180,7 +179,7 @@ async fn main() {
                 client.set_aggregation(mesh_if, *v == 1).await.unwrap();
             } else {
                 let enabled = client.get_aggregation(mesh_if).await.unwrap();
-                println!("{}", enabled as u8);
+                println!("{}", if enabled { "enabled" } else { "disabled" });
             }
         }
         Some(("ap_isolation", sub_m)) => {
@@ -189,7 +188,7 @@ async fn main() {
                 client.set_ap_isolation(mesh_if, *v == 1).await.unwrap();
             } else {
                 let enabled = client.get_ap_isolation(mesh_if).await.unwrap();
-                println!("{}", enabled as u8);
+                println!("{}", if enabled { "enabled" } else { "disabled" });
             }
         }
         Some(("bridge_loop_avoidance", sub_m)) => {
@@ -201,7 +200,7 @@ async fn main() {
                     .unwrap();
             } else {
                 let enabled = client.get_bridge_loop_avoidance(mesh_if).await.unwrap();
-                println!("{}", enabled as u8);
+                println!("{}", if enabled { "enabled" } else { "disabled" });
             }
         }
         Some(("routing_algo", sub_m)) => {

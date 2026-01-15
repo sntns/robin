@@ -2,7 +2,6 @@
 mod commands;
 mod error;
 mod netlink;
-mod sysfs;
 
 pub mod client;
 pub mod model;
