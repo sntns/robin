@@ -14,8 +14,6 @@ mod transglobal;
 mod translocal;
 mod utils;
 
-// TODO: do loglevel command
-
 #[tokio::main]
 async fn main() {
     let client = robin::RobinClient::new();
