@@ -34,84 +34,83 @@ use neli::nl::Nlmsghdr;
 /// Returns a `RobinError` if any netlink operation or parsing fails.
 pub async fn get_transglobal(mesh_if: &str) -> Result<Vec<TransglobalEntry>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
-    let ifindex = if_nametoindex(mesh_if)
-        .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
+    let ifindex = if_nametoindex(mesh_if).await.map_err(|_| {
+        RobinError::Netlink(format!(
+            "Error - interface '{}' is not present or not a batman-adv interface",
+            mesh_if
+        ))
+    })?;
 
     attrs
         .add(
             Attribute::BatadvAttrMeshIfindex,
             AttrValueForSend::U32(ifindex),
         )
-        .map_err(|e| RobinError::Netlink(format!("Failed to add MeshIfIndex: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to add MeshIfIndex attribute".to_string()))?;
 
     let msg = netlink::build_genl_msg(Command::BatadvCmdGetTranstableGlobal, attrs.build())
-        .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to build Netlink message".to_string()))?;
 
-    // Send
-    let mut sock = netlink::BatadvSocket::connect()
-        .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to connect to socket: {:?}", e)))?;
+    let mut sock = netlink::BatadvSocket::connect().await.map_err(|_| {
+        RobinError::Netlink("Failed to connect to batman-adv Netlink socket".to_string())
+    })?;
 
     let mut response = sock
         .send(NlmF::REQUEST | NlmF::DUMP, msg)
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to send Netlink request".to_string()))?;
 
     let mut entries = Vec::new();
     while let Some(msg) = response.next().await {
         let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> =
-            msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
+            msg.map_err(|_| RobinError::Netlink("Failed to parse Netlink message".to_string()))?;
 
-        if *msg.nl_type() == Nlmsg::Done.into() {
-            break;
-        }
-
-        if *msg.nl_type() == Nlmsg::Error.into() {
-            match &msg.nl_payload() {
+        match *msg.nl_type() {
+            x if x == Nlmsg::Done.into() => break,
+            x if x == Nlmsg::Error.into() => match &msg.nl_payload() {
+                NlPayload::Err(err) if *err.error() == 0 => break,
                 NlPayload::Err(err) => {
-                    if *err.error() == 0 {
-                        break;
-                    } else {
-                        return Err(RobinError::Netlink(format!(
-                            "netlink error {}",
-                            err.error()
-                        )));
-                    }
+                    return Err(RobinError::Netlink(format!(
+                        "Netlink error {}",
+                        err.error()
+                    )));
                 }
                 _ => {
-                    return Err(RobinError::Netlink("unknown netlink error payload".into()));
+                    return Err(RobinError::Netlink(
+                        "Unknown Netlink error payload".to_string(),
+                    ));
                 }
-            }
+            },
+            _ => {}
         }
 
         let attrs = msg
             .get_payload()
-            .ok_or_else(|| RobinError::Parse("Message without payload".into()))?
+            .ok_or_else(|| RobinError::Parse("Message without payload".to_string()))?
             .attrs()
             .get_attr_handle();
 
         let client = attrs
             .get_attr_payload_as::<[u8; 6]>(Attribute::BatadvAttrTtAddress.into())
-            .map_err(|e| RobinError::Parse(format!("Missing TT_ADDRESS: {:?}", e)))?;
+            .map_err(|_| RobinError::Parse("Missing TT_ADDRESS".to_string()))?;
         let orig = attrs
             .get_attr_payload_as::<[u8; 6]>(Attribute::BatadvAttrOrigAddress.into())
-            .map_err(|e| RobinError::Parse(format!("Missing ORIG_ADDRESS: {:?}", e)))?;
+            .map_err(|_| RobinError::Parse("Missing ORIG_ADDRESS".to_string()))?;
         let vid = attrs
             .get_attr_payload_as::<u16>(Attribute::BatadvAttrTtVid.into())
-            .map_err(|e| RobinError::Parse(format!("Missing TT_VID: {:?}", e)))?;
+            .map_err(|_| RobinError::Parse("Missing TT_VID".to_string()))?;
         let ttvn = attrs
             .get_attr_payload_as::<u8>(Attribute::BatadvAttrTtTtvn.into())
-            .map_err(|e| RobinError::Parse(format!("Missing TT_TTVN: {:?}", e)))?;
+            .map_err(|_| RobinError::Parse("Missing TT_TTVN".to_string()))?;
         let last_ttvn = attrs
             .get_attr_payload_as::<u8>(Attribute::BatadvAttrTtLastTtvn.into())
-            .map_err(|e| RobinError::Parse(format!("Missing TT_LAST_TTVN: {:?}", e)))?;
+            .map_err(|_| RobinError::Parse("Missing TT_LAST_TTVN".to_string()))?;
         let crc32 = attrs
             .get_attr_payload_as::<u32>(Attribute::BatadvAttrTtCrc32.into())
-            .map_err(|e| RobinError::Parse(format!("Missing TT_CRC32: {:?}", e)))?;
+            .map_err(|_| RobinError::Parse("Missing TT_CRC32".to_string()))?;
         let raw_flags = attrs
             .get_attr_payload_as::<u32>(Attribute::BatadvAttrTtFlags.into())
-            .map_err(|e| RobinError::Parse(format!("Missing TT_FLAGS: {:?}", e)))?;
+            .map_err(|_| RobinError::Parse("Missing TT_FLAGS".to_string()))?;
         let flags = ClientFlags::from_bits_truncate(raw_flags);
         let is_best = attrs
             .get_attribute(Attribute::BatadvAttrFlagBest.into())

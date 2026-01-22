@@ -18,9 +18,12 @@ use neli::nl::Nlmsghdr;
 /// Returns `Ok(true)` if bridge loop avoidance is enabled, `Ok(false)` if disabled,
 /// or a `RobinError` if the value could not be retrieved.
 pub async fn get_bridge_loop_avoidance(mesh_if: &str) -> Result<bool, RobinError> {
-    let ifindex = if_nametoindex(mesh_if)
-        .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to get ifindex: {:?}", e)))?;
+    let ifindex = if_nametoindex(mesh_if).await.map_err(|_| {
+        RobinError::Netlink(format!(
+            "Error - interface '{}' is not present or not a batman-adv interface",
+            mesh_if
+        ))
+    })?;
 
     let mut attrs = netlink::GenlAttrBuilder::new();
     attrs
@@ -28,25 +31,26 @@ pub async fn get_bridge_loop_avoidance(mesh_if: &str) -> Result<bool, RobinError
             Attribute::BatadvAttrMeshIfindex,
             AttrValueForSend::U32(ifindex),
         )
-        .map_err(|e| {
-            RobinError::Netlink(format!("Failed to add MeshIfIndex attribute: {:?}", e))
+        .map_err(|_| {
+            RobinError::Netlink("Error - could not set mesh interface index".to_string())
         })?;
 
     let msg = netlink::build_genl_msg(Command::BatadvCmdGetMeshInfo, attrs.build())
-        .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Error - failed to build netlink message".to_string()))?;
 
-    let mut sock = netlink::BatadvSocket::connect()
-        .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to connect to socket: {:?}", e)))?;
+    let mut sock = netlink::BatadvSocket::connect().await.map_err(|_| {
+        RobinError::Netlink("Error - failed to connect to batman-adv netlink socket".to_string())
+    })?;
 
     let mut response = sock
         .send(NlmF::REQUEST, msg)
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Error - failed to send netlink request".to_string()))?;
 
     while let Some(msg) = response.next().await {
-        let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> =
-            msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
+        let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> = msg.map_err(|_| {
+            RobinError::Netlink("Error - failed to parse netlink response".to_string())
+        })?;
 
         let payload = match msg.get_payload() {
             Some(p) => p,
@@ -65,7 +69,7 @@ pub async fn get_bridge_loop_avoidance(mesh_if: &str) -> Result<bool, RobinError
     }
 
     Err(RobinError::NotFound(
-        "Bridge loop avoidance attribute not found".to_string(),
+        "Error - bridge loop avoidance attribute not found".to_string(),
     ))
 }
 
@@ -80,9 +84,12 @@ pub async fn get_bridge_loop_avoidance(mesh_if: &str) -> Result<bool, RobinError
 ///
 /// Returns `Ok(())` if the operation succeeds, or a `RobinError` if it fails.
 pub async fn set_bridge_loop_avoidance(mesh_if: &str, enabled: bool) -> Result<(), RobinError> {
-    let ifindex = if_nametoindex(mesh_if)
-        .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to get ifindex: {:?}", e)))?;
+    let ifindex = if_nametoindex(mesh_if).await.map_err(|_| {
+        RobinError::Netlink(format!(
+            "Error - interface '{}' is not present or not a batman-adv interface",
+            mesh_if
+        ))
+    })?;
 
     let mut attrs = netlink::GenlAttrBuilder::new();
     attrs
@@ -90,8 +97,8 @@ pub async fn set_bridge_loop_avoidance(mesh_if: &str, enabled: bool) -> Result<(
             Attribute::BatadvAttrMeshIfindex,
             AttrValueForSend::U32(ifindex),
         )
-        .map_err(|e| {
-            RobinError::Netlink(format!("Failed to add MeshIfIndex attribute: {:?}", e))
+        .map_err(|_| {
+            RobinError::Netlink("Error - could not set mesh interface index".to_string())
         })?;
 
     attrs
@@ -99,23 +106,20 @@ pub async fn set_bridge_loop_avoidance(mesh_if: &str, enabled: bool) -> Result<(
             Attribute::BatadvAttrBridgeLoopAvoidanceEnabled,
             AttrValueForSend::U8(enabled as u8),
         )
-        .map_err(|e| {
-            RobinError::Netlink(format!(
-                "Failed to add BRIDGE_LOOP_AVOIDANCE attribute: {:?}",
-                e
-            ))
+        .map_err(|_| {
+            RobinError::Netlink("Error - could not set bridge loop avoidance attribute".to_string())
         })?;
 
     let msg = netlink::build_genl_msg(Command::BatadvCmdSetMesh, attrs.build())
-        .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Error - failed to build netlink message".to_string()))?;
 
-    let mut sock = netlink::BatadvSocket::connect()
-        .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to connect to socket: {:?}", e)))?;
+    let mut sock = netlink::BatadvSocket::connect().await.map_err(|_| {
+        RobinError::Netlink("Error - failed to connect to batman-adv netlink socket".to_string())
+    })?;
 
     sock.send(NlmF::REQUEST | NlmF::ACK, msg)
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Error - failed to send netlink request".to_string()))?;
 
     Ok(())
 }

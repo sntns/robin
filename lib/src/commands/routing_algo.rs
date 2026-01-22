@@ -49,17 +49,17 @@ pub async fn get_default_routing_algo() -> Result<String, RobinError> {
 pub async fn get_active_routing_algos() -> Result<Vec<(String, String)>, RobinError> {
     let (rtnl, _) = NlRouter::connect(NlFamily::Route, None, Groups::empty())
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to connect NlRouter: {:?}", e)))?;
+        .map_err(|e| RobinError::Netlink(format!("Failed to connect to Netlink: {:?}", e)))?;
 
     rtnl.enable_ext_ack(true)
-        .map_err(|e| RobinError::Netlink(format!("Failed to enable ext ack: {:?}", e)))?;
+        .map_err(|e| RobinError::Netlink(format!("Failed to enable extended ACK: {:?}", e)))?;
     rtnl.enable_strict_checking(true)
         .map_err(|e| RobinError::Netlink(format!("Failed to enable strict checking: {:?}", e)))?;
 
     let msg = IfinfomsgBuilder::default()
         .ifi_family(RtAddrFamily::Unspecified)
         .build()
-        .map_err(|e| RobinError::Netlink(format!("Ifinfomsg build failed: {:?}", e)))?;
+        .map_err(|e| RobinError::Netlink(format!("Failed to build Ifinfomsg: {:?}", e)))?;
 
     let mut response = rtnl
         .send::<_, _, Rtm, Ifinfomsg>(
@@ -68,12 +68,13 @@ pub async fn get_active_routing_algos() -> Result<Vec<(String, String)>, RobinEr
             NlPayload::Payload(msg),
         )
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
+        .map_err(|e| RobinError::Netlink(format!("Failed to send GETLINK request: {:?}", e)))?;
 
     let mut result = Vec::new();
     while let Some(msg) = response.next().await {
-        let msg: Nlmsghdr<Rtm, Ifinfomsg> =
-            msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
+        let msg: Nlmsghdr<Rtm, Ifinfomsg> = msg.map_err(|e| {
+            RobinError::Netlink(format!("Failed to parse Netlink message: {:?}", e))
+        })?;
 
         let payload = match msg.get_payload() {
             Some(p) => p,
@@ -100,9 +101,12 @@ pub async fn get_active_routing_algos() -> Result<Vec<(String, String)>, RobinEr
             continue;
         }
 
-        let algo = get_algoname_netlink(mesh_if.as_str())
-            .await
-            .map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
+        let algo = get_algoname_netlink(mesh_if.as_str()).await.map_err(|e| {
+            RobinError::Netlink(format!(
+                "Failed to get routing algorithm for '{}': {:?}",
+                mesh_if, e
+            ))
+        })?;
 
         result.push((mesh_if, algo));
     }
@@ -122,21 +126,27 @@ pub async fn get_available_routing_algos() -> Result<Vec<String>, RobinError> {
         Command::BatadvCmdGetRoutingAlgos,
         GenlAttrBuilder::new().build(),
     )
-    .map_err(|e| RobinError::Netlink(format!("Failed to build routing algos message: {:?}", e)))?;
+    .map_err(|e| RobinError::Netlink(format!("Failed to build routing algos request: {:?}", e)))?;
 
-    let mut sock = netlink::BatadvSocket::connect()
-        .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to connect to socket: {:?}", e)))?;
+    let mut sock = netlink::BatadvSocket::connect().await.map_err(|e| {
+        RobinError::Netlink(format!(
+            "Failed to connect to batadv netlink socket: {:?}",
+            e
+        ))
+    })?;
 
     let mut response = sock
         .send(NlmF::REQUEST | NlmF::DUMP, msg)
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
+        .map_err(|e| {
+            RobinError::Netlink(format!("Failed to send routing algos request: {:?}", e))
+        })?;
 
     let mut algos = Vec::new();
     while let Some(msg) = response.next().await {
-        let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> =
-            msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
+        let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> = msg.map_err(|e| {
+            RobinError::Netlink(format!("Failed to parse routing algos message: {:?}", e))
+        })?;
 
         let payload = match msg.get_payload() {
             Some(p) => p,

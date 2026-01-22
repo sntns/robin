@@ -24,9 +24,12 @@ use neli::utils::Groups;
 /// A `String` containing the algorithm name, or a `RobinError` if the interface
 /// cannot be queried or the algorithm name cannot be found.
 pub async fn get_algoname_netlink(mesh_if: &str) -> Result<String, RobinError> {
-    let ifindex = if_nametoindex(mesh_if)
-        .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
+    let ifindex = super::if_nametoindex(mesh_if).await.map_err(|_| {
+        RobinError::Netlink(format!(
+            "Error - interface '{}' is not present or not a batman-adv interface",
+            mesh_if
+        ))
+    })?;
 
     let mut attrs = netlink::GenlAttrBuilder::new();
     attrs
@@ -34,25 +37,23 @@ pub async fn get_algoname_netlink(mesh_if: &str) -> Result<String, RobinError> {
             Attribute::BatadvAttrMeshIfindex,
             AttrValueForSend::U32(ifindex),
         )
-        .map_err(|e| {
-            RobinError::Netlink(format!("Failed to add MeshIfIndex attribute: {:?}", e))
-        })?;
+        .map_err(|_| RobinError::Netlink("Failed to add MeshIfIndex attribute".to_string()))?;
 
     let msg = netlink::build_genl_msg(Command::BatadvCmdGetMeshInfo, attrs.build())
-        .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to build Netlink message".to_string()))?;
 
-    let mut sock = netlink::BatadvSocket::connect()
-        .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to connect to socket: {:?}", e)))?;
+    let mut sock = netlink::BatadvSocket::connect().await.map_err(|_| {
+        RobinError::Netlink("Failed to connect to batman-adv Netlink socket".to_string())
+    })?;
 
     let mut response = sock
         .send(NlmF::REQUEST, msg)
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to send Netlink request".to_string()))?;
 
     while let Some(msg) = response.next().await {
         let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> =
-            msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
+            msg.map_err(|_| RobinError::Netlink("Failed to parse Netlink message".to_string()))?;
 
         let payload = match msg.get_payload() {
             Some(p) => p,
@@ -63,15 +64,15 @@ pub async fn get_algoname_netlink(mesh_if: &str) -> Result<String, RobinError> {
             if *attr.nla_type().nla_type() == Attribute::BatadvAttrAlgoName.into() {
                 let bytes = attr.nla_payload().as_ref();
                 let nul = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
-                let algo = String::from_utf8_lossy(&bytes[..nul]).to_string();
-                return Ok(algo);
+                return Ok(String::from_utf8_lossy(&bytes[..nul]).to_string());
             }
         }
     }
 
-    Err(RobinError::NotFound(
-        "Algorithm name not found for interface bat0".to_string(),
-    ))
+    Err(RobinError::NotFound(format!(
+        "No routing algorithm found for interface '{}'",
+        mesh_if
+    )))
 }
 
 /// Converts a network interface name to its corresponding interface index (ifindex).
@@ -90,17 +91,15 @@ pub async fn get_algoname_netlink(mesh_if: &str) -> Result<String, RobinError> {
 pub async fn if_nametoindex(ifname: &str) -> Result<u32, RobinError> {
     let (rtnl, _) = NlRouter::connect(NlFamily::Route, None, Groups::empty())
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to connect with NlRouter: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to connect to Netlink".to_string()))?;
 
-    rtnl.enable_ext_ack(true)
-        .map_err(|e| RobinError::Netlink(format!("Failed to enable ext ack: {:?}", e)))?;
-    rtnl.enable_strict_checking(true)
-        .map_err(|e| RobinError::Netlink(format!("Failed to enable strict checking: {:?}", e)))?;
+    rtnl.enable_ext_ack(true).ok();
+    rtnl.enable_strict_checking(true).ok();
 
     let ifinfomsg = IfinfomsgBuilder::default()
         .ifi_family(RtAddrFamily::Unspecified)
         .build()
-        .map_err(|e| RobinError::Netlink(format!("Failed to create Ifinfomsg: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to create Ifinfomsg".to_string()))?;
 
     let mut response = rtnl
         .send::<_, _, Rtm, Ifinfomsg>(
@@ -109,11 +108,11 @@ pub async fn if_nametoindex(ifname: &str) -> Result<u32, RobinError> {
             NlPayload::Payload(ifinfomsg),
         )
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to send Netlink request".to_string()))?;
 
     while let Some(msg) = response.next().await {
         let msg: Nlmsghdr<Rtm, Ifinfomsg> =
-            msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
+            msg.map_err(|_| RobinError::Netlink("Failed to parse Netlink message".to_string()))?;
 
         if let Some(payload) = msg.get_payload() {
             let attrs = payload.rtattrs().get_attr_handle();
@@ -126,7 +125,7 @@ pub async fn if_nametoindex(ifname: &str) -> Result<u32, RobinError> {
     }
 
     Err(RobinError::NotFound(format!(
-        "Interface {} not found",
+        "Interface '{}' not found",
         ifname
     )))
 }
@@ -147,17 +146,15 @@ pub async fn if_nametoindex(ifname: &str) -> Result<u32, RobinError> {
 pub async fn if_indextoname(ifindex: u32) -> Result<String, RobinError> {
     let (rtnl, _) = NlRouter::connect(NlFamily::Route, None, Groups::empty())
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to connect with NlRouter: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to connect to Netlink".to_string()))?;
 
-    rtnl.enable_ext_ack(true)
-        .map_err(|e| RobinError::Netlink(format!("Failed to enable ext ack: {:?}", e)))?;
-    rtnl.enable_strict_checking(true)
-        .map_err(|e| RobinError::Netlink(format!("Failed to enable strict checking: {:?}", e)))?;
+    rtnl.enable_ext_ack(true).ok();
+    rtnl.enable_strict_checking(true).ok();
 
     let ifinfomsg = IfinfomsgBuilder::default()
         .ifi_family(RtAddrFamily::Unspecified)
         .build()
-        .map_err(|e| RobinError::Netlink(format!("Failed to create Ifinfomsg: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to create Ifinfomsg".to_string()))?;
 
     let mut response = rtnl
         .send::<_, _, Rtm, Ifinfomsg>(
@@ -166,11 +163,11 @@ pub async fn if_indextoname(ifindex: u32) -> Result<String, RobinError> {
             NlPayload::Payload(ifinfomsg),
         )
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to send Netlink request".to_string()))?;
 
     while let Some(msg) = response.next().await {
         let msg: Nlmsghdr<Rtm, Ifinfomsg> =
-            msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
+            msg.map_err(|_| RobinError::Netlink("Failed to parse Netlink message".to_string()))?;
 
         if let Some(payload) = msg.get_payload() {
             if *payload.ifi_index() == ifindex.cast_signed() {

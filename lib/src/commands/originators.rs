@@ -37,114 +37,97 @@ use neli::nl::Nlmsghdr;
 /// }
 /// ```
 pub async fn get_originators(mesh_if: &str) -> Result<Vec<Originator>, RobinError> {
-    // Create the value and the attribute
     let mut attrs = netlink::GenlAttrBuilder::new();
-    let ifindex = if_nametoindex(mesh_if)
-        .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to get Ifindex: {:?}", e)))?;
+    let ifindex = if_nametoindex(mesh_if).await.map_err(|_| {
+        RobinError::Netlink(format!(
+            "Error - interface '{}' is not present or not a batman-adv interface",
+            mesh_if
+        ))
+    })?;
 
     attrs
         .add(
             Attribute::BatadvAttrMeshIfindex,
             AttrValueForSend::U32(ifindex),
         )
-        .map_err(|e| {
-            RobinError::Netlink(format!("Failed to add MeshIfIndex attribute: {:?}", e))
-        })?;
+        .map_err(|_| RobinError::Netlink("Failed to add MeshIfIndex attribute".to_string()))?;
 
-    // Build the message
     let msg = netlink::build_genl_msg(Command::BatadvCmdGetOriginators, attrs.build())
-        .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to build netlink message".to_string()))?;
 
-    // Connect to socket
     let mut socket = netlink::BatadvSocket::connect()
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to connect to socket: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to connect to batman-adv socket".to_string()))?;
 
-    // Send message and get response
     let mut response = socket
         .send(NlmF::REQUEST | NlmF::DUMP, msg)
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Failed to send netlink request".to_string()))?;
 
-    // Parse response
     let mut originators: Vec<Originator> = Vec::new();
     while let Some(msg) = response.next().await {
         let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> =
-            msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
+            msg.map_err(|_| RobinError::Netlink("Failed to parse netlink message".to_string()))?;
 
-        if *msg.nl_type() == Nlmsg::Done.into() {
-            // End of message
-            break;
-        }
-
-        if *msg.nl_type() == Nlmsg::Error.into() {
-            match &msg.nl_payload() {
+        match *msg.nl_type() {
+            x if x == Nlmsg::Done.into() => break,
+            x if x == Nlmsg::Error.into() => match &msg.nl_payload() {
+                NlPayload::Err(err) if *err.error() == 0 => break,
                 NlPayload::Err(err) => {
-                    if *err.error() == 0 {
-                        // Not a real error, indicates end of dump
-                        break;
-                    } else {
-                        return Err(RobinError::Netlink(format!(
-                            "netlink error {}",
-                            err.error()
-                        )));
-                    }
+                    return Err(RobinError::Netlink(format!(
+                        "Netlink error {}",
+                        err.error()
+                    )));
                 }
                 _ => {
-                    return Err(RobinError::Netlink("unknown netlink error payload".into()));
+                    return Err(RobinError::Netlink(
+                        "Unknown netlink error payload".to_string(),
+                    ));
                 }
-            }
+            },
+            _ => {}
         }
 
-        // handle of all top-level attributes
         let attrs = msg
             .get_payload()
             .ok_or_else(|| RobinError::Parse("Message without payload".into()))?
             .attrs()
             .get_attr_handle();
 
-        // Required attributes (batctl fails hard if missing)
         let orig = attrs
             .get_attr_payload_as::<[u8; 6]>(Attribute::BatadvAttrOrigAddress.into())
-            .map_err(|e| RobinError::Parse(format!("Missing ORIG_ADDRESS: {:?}", e)))?;
+            .map_err(|_| RobinError::Parse("Missing ORIG_ADDRESS".into()))?;
 
         let neigh = attrs
             .get_attr_payload_as::<[u8; 6]>(Attribute::BatadvAttrNeighAddress.into())
-            .map_err(|e| RobinError::Parse(format!("Missing NEIGH_ADDRESS: {:?}", e)))?;
+            .map_err(|_| RobinError::Parse("Missing NEIGH_ADDRESS".into()))?;
 
-        // HARD_IFNAME or fallback to HARD_IFINDEX
-        let ifname =
+        let outgoing_if =
             match attrs.get_attr_payload_as::<[u8; 16]>(Attribute::BatadvAttrHardIfname.into()) {
                 Ok(bytes) => {
                     let nul_pos = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
                     String::from_utf8_lossy(&bytes[..nul_pos]).into_owned()
                 }
                 Err(_) => {
-                    let ifindex = attrs
+                    let idx = attrs
                         .get_attr_payload_as::<u32>(Attribute::BatadvAttrHardIfindex.into())
-                        .map_err(|e| RobinError::Parse(format!("Missing HARD_IFINDEX: {:?}", e)))?;
-                    if_indextoname(ifindex).await.map_err(|e| {
-                        RobinError::Netlink(format!("Failed to get ifname from ifindex: {:?}", e))
+                        .map_err(|_| RobinError::Parse("Missing HARD_IFINDEX".into()))?;
+                    if_indextoname(idx).await.map_err(|_| {
+                        RobinError::Netlink(format!("Failed to resolve ifindex {} -> name", idx))
                     })?
                 }
             };
 
-        // last_seen is mandatory
         let last_seen_ms = attrs
             .get_attr_payload_as::<u32>(Attribute::BatadvAttrLastSeenMsecs.into())
-            .map_err(|e| RobinError::Parse(format!("Missing LAST_SEEN: {:?}", e)))?;
+            .map_err(|_| RobinError::Parse("Missing LAST_SEEN_MSECS".into()))?;
 
-        // Optional attributes
         let tq = attrs
             .get_attr_payload_as::<u8>(Attribute::BatadvAttrTq.into())
             .ok();
-
         let tp = attrs
             .get_attr_payload_as::<u32>(Attribute::BatadvAttrThroughput.into())
             .ok();
-
-        // BEST flag ("*")
         let is_best = attrs
             .get_attribute(Attribute::BatadvAttrFlagBest.into())
             .is_some();
@@ -152,15 +135,13 @@ pub async fn get_originators(mesh_if: &str) -> Result<Vec<Originator>, RobinErro
         originators.push(Originator {
             originator: MacAddr6::from(orig),
             next_hop: MacAddr6::from(neigh),
-            outgoing_if: ifname,
+            outgoing_if,
             last_seen_ms,
             tq,
             throughput: tp,
             is_best,
         });
     }
-
-    // socket drops automatically with end of scope
 
     Ok(originators)
 }

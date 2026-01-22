@@ -140,7 +140,13 @@ async fn main() {
             };
 
             let (down, up, sel_class) = if let Some(param) = param_str {
-                gw_mode::parse_gw_param(mode, param).unwrap()
+                match gw_mode::parse_gw_param(mode, param) {
+                    Ok(values) => values,
+                    Err(e) => {
+                        eprintln!("{}", e);
+                        std::process::exit(1);
+                    }
+                }
             } else {
                 (None, None, None)
             };

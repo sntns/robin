@@ -32,8 +32,11 @@ use neli::nl::{NlPayload, Nlmsghdr};
 /// ```
 pub async fn get_neighbors(mesh_if: &str) -> Result<Vec<Neighbor>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
-    let ifindex = if_nametoindex(mesh_if).await.map_err(|e| {
-        RobinError::Netlink(format!("Failed to get ifindex for {:?}: {:?}", mesh_if, e))
+    let ifindex = if_nametoindex(mesh_if).await.map_err(|_| {
+        RobinError::Netlink(format!(
+            "Error - interface '{}' is not present or not a batman-adv interface",
+            mesh_if
+        ))
     })?;
 
     attrs
@@ -41,64 +44,62 @@ pub async fn get_neighbors(mesh_if: &str) -> Result<Vec<Neighbor>, RobinError> {
             Attribute::BatadvAttrMeshIfindex,
             AttrValueForSend::U32(ifindex),
         )
-        .map_err(|e| {
-            RobinError::Netlink(format!("Failed to add MeshIfindex attribute: {:?}", e))
+        .map_err(|_| {
+            RobinError::Netlink("Error - failed to add MeshIfindex attribute".to_string())
         })?;
 
     let msg = netlink::build_genl_msg(Command::BatadvCmdGetOriginators, attrs.build())
-        .map_err(|e| RobinError::Netlink(format!("Failed to build message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Error - failed to build netlink message".to_string()))?;
 
-    let mut sock = netlink::BatadvSocket::connect()
-        .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to connect socket: {:?}", e)))?;
+    let mut sock = netlink::BatadvSocket::connect().await.map_err(|_| {
+        RobinError::Netlink("Error - failed to connect to batman-adv socket".to_string())
+    })?;
 
     let mut response = sock
         .send(NlmF::REQUEST | NlmF::DUMP, msg)
         .await
-        .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
+        .map_err(|_| RobinError::Netlink("Error - failed to send netlink request".to_string()))?;
 
     let mut neighbors: Vec<Neighbor> = Vec::new();
     while let Some(msg) = response.next().await {
-        let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> =
-            msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
+        let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> = msg.map_err(|_| {
+            RobinError::Netlink("Error - failed to parse netlink message".to_string())
+        })?;
 
-        if *msg.nl_type() == Nlmsg::Done.into() {
-            // End of message
-            break;
-        }
-
-        if *msg.nl_type() == Nlmsg::Error.into() {
-            match &msg.nl_payload() {
-                NlPayload::Err(err) => {
-                    if *err.error() == 0 {
-                        // Not a real error, indicates end of dump
-                        break;
-                    } else {
+        match *msg.nl_type() {
+            x if x == Nlmsg::Done.into() => break,
+            x if x == Nlmsg::Error.into() => {
+                match &msg.nl_payload() {
+                    NlPayload::Err(err) if *err.error() == 0 => break, // end of dump
+                    NlPayload::Err(err) => {
                         return Err(RobinError::Netlink(format!(
-                            "netlink error {}",
+                            "Netlink error {}",
                             err.error()
                         )));
                     }
-                }
-                _ => {
-                    return Err(RobinError::Netlink("unknown netlink error payload".into()));
+                    _ => {
+                        return Err(RobinError::Netlink(
+                            "Unknown netlink error payload".to_string(),
+                        ));
+                    }
                 }
             }
+            _ => {}
         }
 
         let attrs = msg
             .get_payload()
-            .ok_or_else(|| RobinError::Parse("Message without payload".into()))?
+            .ok_or_else(|| RobinError::Parse("Error - message has no payload".into()))?
             .attrs()
             .get_attr_handle();
 
         let neigh_addr = attrs
             .get_attr_payload_as::<[u8; 6]>(Attribute::BatadvAttrNeighAddress.into())
-            .map_err(|e| RobinError::Parse(format!("Missing NEIGH_ADDRESS: {:?}", e)))?;
+            .map_err(|_| RobinError::Parse("Error - missing NEIGH_ADDRESS".into()))?;
 
         let last_seen_ms = attrs
             .get_attr_payload_as::<u32>(Attribute::BatadvAttrLastSeenMsecs.into())
-            .map_err(|e| RobinError::Parse(format!("Missing LAST_SEEN_MSECS: {:?}", e)))?;
+            .map_err(|_| RobinError::Parse("Error - missing LAST_SEEN_MSECS".into()))?;
 
         let outgoing_if =
             match attrs.get_attr_payload_as::<[u8; 16]>(Attribute::BatadvAttrHardIfname.into()) {
@@ -109,9 +110,12 @@ pub async fn get_neighbors(mesh_if: &str) -> Result<Vec<Neighbor>, RobinError> {
                 Err(_) => {
                     let ifindex = attrs
                         .get_attr_payload_as::<u32>(Attribute::BatadvAttrHardIfindex.into())
-                        .map_err(|e| RobinError::Parse(format!("Missing HARD_IFINDEX: {:?}", e)))?;
-                    if_indextoname(ifindex).await.map_err(|e| {
-                        RobinError::Netlink(format!("Failed to resolve ifindex -> name: {:?}", e))
+                        .map_err(|_| RobinError::Parse("Error - missing HARD_IFINDEX".into()))?;
+                    if_indextoname(ifindex).await.map_err(|_| {
+                        RobinError::Netlink(format!(
+                            "Error - failed to resolve interface index {}",
+                            ifindex
+                        ))
                     })?
                 }
             };
@@ -120,7 +124,6 @@ pub async fn get_neighbors(mesh_if: &str) -> Result<Vec<Neighbor>, RobinError> {
             .get_attr_payload_as::<u32>(Attribute::BatadvAttrThroughput.into())
             .ok();
 
-        // push entry
         neighbors.push(Neighbor {
             neigh: MacAddr6::from(neigh_addr),
             outgoing_if,
