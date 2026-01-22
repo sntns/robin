@@ -3,9 +3,9 @@ use crate::error::RobinError;
 use crate::model::{AttrValueForSend, Attribute, Command, GatewayInfo, GwMode};
 use crate::netlink;
 
-use neli::consts::nl::{NlmF, Nlmsg};
+use neli::consts::nl::NlmF;
 use neli::genl::Genlmsghdr;
-use neli::nl::{NlPayload, Nlmsghdr};
+use neli::nl::Nlmsghdr;
 
 /// Retrieves the current gateway settings for a BATMAN-adv mesh interface.
 ///
@@ -151,19 +151,21 @@ pub async fn set_gateway(
                 .add(Attribute::BatadvAttrGwMode, AttrValueForSend::U8(2))
                 .map_err(|e| RobinError::Netlink(format!("Failed to add GwMode: {:?}", e)))?;
 
+            // Divided by 100 because batman-adv multiply by 100 the value received
             attrs
                 .add(
                     Attribute::BatadvAttrGwBandwidthDown,
-                    AttrValueForSend::U32(down.unwrap_or(10)),
+                    AttrValueForSend::U32(down.unwrap_or(10000) / 100),
                 )
                 .map_err(|e| {
                     RobinError::Netlink(format!("Failed to add GwBandwidthDown: {:?}", e))
                 })?;
 
+            // Divided by 100 because batman-adv multiply by 100 the value received
             attrs
                 .add(
                     Attribute::BatadvAttrGwBandwidthUp,
-                    AttrValueForSend::U32(up.unwrap_or(2)),
+                    AttrValueForSend::U32(up.unwrap_or(2000) / 100),
                 )
                 .map_err(|e| {
                     RobinError::Netlink(format!("Failed to add GwBandwidthUp: {:?}", e))
@@ -190,31 +192,10 @@ pub async fn set_gateway(
         .await
         .map_err(|e| RobinError::Netlink(format!("Failed to connect to socket: {:?}", e)))?;
 
-    let mut response = socket
+    socket
         .send(NlmF::REQUEST | NlmF::ACK, msg)
         .await
         .map_err(|e| RobinError::Netlink(format!("Failed to send message: {:?}", e)))?;
 
-    while let Some(msg) = response.next().await {
-        let msg: Nlmsghdr<u16, Genlmsghdr<u8, u16>> =
-            msg.map_err(|e| RobinError::Netlink(format!("{:?}", e)))?;
-
-        if *msg.nl_type() == Nlmsg::Error.into() {
-            match msg.nl_payload() {
-                NlPayload::Err(err) => {
-                    return if *err.error() == 0 {
-                        Ok(())
-                    } else {
-                        Err(RobinError::Netlink(format!(
-                            "kernel rejected set-gw-mode: {}",
-                            err.error()
-                        )))
-                    };
-                }
-                _ => {}
-            }
-        }
-    }
-
-    Err(RobinError::Netlink("SetGwMode: no ACK from kernel".into()))
+    Ok(())
 }
