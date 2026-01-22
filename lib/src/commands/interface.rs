@@ -47,6 +47,7 @@ pub async fn count_interfaces(mesh_if: &str) -> Result<u32, RobinError> {
         .map_err(|e| RobinError::Netlink(format!("Failed to enable strict checking: {:?}", e)))?;
 
     let ifinfomsg = IfinfomsgBuilder::default()
+        .ifi_family(RtAddrFamily::Unspecified)
         .build()
         .map_err(|e| RobinError::Netlink(format!("Failed to create Ifinfomsg: {:?}", e)))?;
 
