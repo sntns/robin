@@ -64,10 +64,7 @@ If you prefer to release manually from your local machine:
    cargo release major --execute
    ```
 
-3. Push the changes and tags:
-   ```bash
-   git push origin main --follow-tags
-   ```
+   cargo-release will automatically push the changes and tags to GitHub.
 
 **Note**: Make sure you have:
 - Your crates.io API token configured in `~/.cargo/credentials`
@@ -81,7 +78,7 @@ The release configuration is defined in `Cargo.toml` under `[package.metadata.re
 ```toml
 [package.metadata.release]
 sign-commit = false
-push = false
+push = true
 publish = true
 allow-branch = ["main"]
 pre-release-commit-message = "Release {{version}}"
@@ -91,7 +88,7 @@ tag-name = "v{{version}}"
 
 This configuration:
 - Does not sign commits (set to `true` if you use GPG signing)
-- Does not automatically push (GitHub Actions handles this)
+- Automatically pushes changes and tags to GitHub
 - Publishes to crates.io
 - Only allows releases from the `main` branch
 - Uses "Release X.Y.Z" as the commit and tag message

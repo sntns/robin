@@ -32,7 +32,7 @@ comfy-table = "7"
 [package.metadata.release]
 # cargo-release configuration
 sign-commit = false
-push = false
+push = true
 publish = true
 allow-branch = ["main"]
 pre-release-commit-message = "Release {{version}}"
