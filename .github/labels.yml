@@ -1,0 +1,109 @@
+# GitHub Labels Configuration
+# This file defines labels for better repository organization and indexing
+# Labels can be synced using tools like github/labeler or manually applied
+
+# Type labels - categorize issues and PRs by type
+- name: "bug"
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: "enhancement"
+  color: "a2eeef"
+  description: "New feature or request"
+
+- name: "documentation"
+  color: "0075ca"
+  description: "Improvements or additions to documentation"
+
+- name: "question"
+  color: "d876e3"
+  description: "Further information is requested"
+
+# Priority labels
+- name: "priority: high"
+  color: "e11d21"
+  description: "High priority issue"
+
+- name: "priority: medium"
+  color: "eb6420"
+  description: "Medium priority issue"
+
+- name: "priority: low"
+  color: "fbca04"
+  description: "Low priority issue"
+
+# Status labels
+- name: "good first issue"
+  color: "7057ff"
+  description: "Good for newcomers"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention is needed"
+
+- name: "wontfix"
+  color: "ffffff"
+  description: "This will not be worked on"
+
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "This issue or pull request already exists"
+
+# Component labels - specific to robin project
+- name: "component: cli"
+  color: "c2e0c6"
+  description: "Related to the robctl CLI tool"
+
+- name: "component: library"
+  color: "bfdadc"
+  description: "Related to the robin Rust library"
+
+- name: "component: netlink"
+  color: "c5def5"
+  description: "Related to netlink communication with batman-adv"
+
+- name: "component: api"
+  color: "d4c5f9"
+  description: "Related to the public API"
+
+# Technology labels for better indexing
+- name: "rust"
+  color: "dea584"
+  description: "Written in Rust"
+
+- name: "networking"
+  color: "006b75"
+  description: "Network-related functionality"
+
+- name: "mesh-networking"
+  color: "1d76db"
+  description: "Related to mesh networking features"
+
+- name: "batman-adv"
+  color: "0e8a16"
+  description: "Related to BATMAN-adv kernel module"
+
+- name: "linux"
+  color: "fef2c0"
+  description: "Linux-specific functionality"
+
+# Development workflow labels
+- name: "dependencies"
+  color: "0366d6"
+  description: "Pull requests that update a dependency file"
+
+- name: "security"
+  color: "ee0701"
+  description: "Security-related issues or improvements"
+
+- name: "testing"
+  color: "1d76db"
+  description: "Related to tests or testing infrastructure"
+
+- name: "ci/cd"
+  color: "ededed"
+  description: "Continuous integration and deployment"
+
+- name: "performance"
+  color: "f9d0c4"
+  description: "Performance improvements or issues"
