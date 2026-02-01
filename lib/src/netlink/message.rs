@@ -51,6 +51,7 @@ pub fn build_genl_msg(
 /// - Sets `NLM_F_REQUEST | NLM_F_DUMP` flags: `REQUEST` signals a request, `DUMP` is for
 ///   multi-entry responses.
 /// - `nl_pid` is set to 0 so the kernel fills in the sender PID automatically.
+#[allow(dead_code)]
 pub fn build_nl_msg(
     family_id: u16,
     cmd: Command,

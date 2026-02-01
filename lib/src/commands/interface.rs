@@ -73,10 +73,10 @@ pub async fn count_interfaces(mesh_if: &str) -> Result<u32, RobinError> {
 
         if let Some(payload) = msg.get_payload() {
             let attrs = payload.rtattrs().get_attr_handle();
-            if let Ok(master) = attrs.get_attr_payload_as::<u32>(Ifla::Master) {
-                if master == mesh_ifindex {
-                    count += 1;
-                }
+            if let Ok(master) = attrs.get_attr_payload_as::<u32>(Ifla::Master)
+                && master == mesh_ifindex
+            {
+                count += 1;
             }
         }
     }

@@ -61,7 +61,7 @@ pub async fn get_bridge_loop_avoidance(mesh_if: &str) -> Result<bool, RobinError
             if *attr.nla_type().nla_type() == Attribute::BatadvAttrBridgeLoopAvoidanceEnabled.into()
             {
                 let bytes = attr.nla_payload().as_ref();
-                if let Some(&val) = bytes.get(0) {
+                if let Some(&val) = bytes.first() {
                     return Ok(val != 0);
                 }
             }

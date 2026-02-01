@@ -30,6 +30,12 @@ use crate::model;
 /// ```
 pub struct RobinClient;
 
+impl Default for RobinClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RobinClient {
     /// Creates a new instance of `RobinClient`.
     ///
