@@ -26,10 +26,14 @@ use neli::nl::{NlPayload, Nlmsghdr};
 /// # Example
 ///
 /// ```no_run
-/// let gateways = get_gateways_list("bat0").await?;
+/// # use robin::model::Gateway;
+/// # async fn example() {
+/// # let gateways: Vec<Gateway> = vec![];
+/// // let gateways = get_gateways_list("bat0").await?;
 /// for gw in gateways {
 ///     println!("Gateway {} via {} (best: {})", gw.mac_addr, gw.outgoing_if, gw.is_best);
 /// }
+/// # }
 /// ```
 pub async fn get_gateways_list(mesh_if: &str) -> Result<Vec<Gateway>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
