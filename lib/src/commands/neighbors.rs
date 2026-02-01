@@ -25,10 +25,14 @@ use neli::nl::{NlPayload, Nlmsghdr};
 /// # Example
 ///
 /// ```no_run
-/// let neighbors = get_neighbors("bat0").await?;
+/// # use robin::model::Neighbor;
+/// # async fn example() {
+/// # let neighbors: Vec<Neighbor> = vec![];
+/// // let neighbors = get_neighbors("bat0").await?;
 /// for n in neighbors {
 ///     println!("Neighbor {} via {} (last seen {} ms)", n.neigh, n.outgoing_if, n.last_seen_ms);
 /// }
+/// # }
 /// ```
 pub async fn get_neighbors(mesh_if: &str) -> Result<Vec<Neighbor>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();

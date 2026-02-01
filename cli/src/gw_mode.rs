@@ -1,6 +1,8 @@
-use crate::robin::{GatewayInfo, GwMode, RobinError};
+use robin::{GatewayInfo, GwMode, RobinError};
 
 use clap::{Arg, Command};
+
+type GwParseResult = (Option<u32>, Option<u32>, Option<u32>);
 
 /// Creates the CLI command for displaying or modifying the gateway mode.
 ///
@@ -97,10 +99,7 @@ pub fn print_gw(info: &GatewayInfo) {
 /// # Notes
 /// - For server mode, the `param` can be `"down/up"` and supports optional `"kbit"` or `"MBit"` suffix.
 /// - For client mode, `param` is parsed as a selection class integer.
-pub fn parse_gw_param(
-    mode: GwMode,
-    param: &str,
-) -> Result<(Option<u32>, Option<u32>, Option<u32>), RobinError> {
+pub fn parse_gw_param(mode: GwMode, param: &str) -> Result<GwParseResult, RobinError> {
     match mode {
         GwMode::Off => Ok((None, None, None)),
         GwMode::Client => {

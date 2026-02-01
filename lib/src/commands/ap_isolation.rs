@@ -60,7 +60,7 @@ pub async fn get_ap_isolation(mesh_if: &str) -> Result<bool, RobinError> {
         for attr in payload.attrs().iter() {
             if *attr.nla_type().nla_type() == Attribute::BatadvAttrApIsolationEnabled.into() {
                 let bytes = attr.nla_payload().as_ref();
-                if let Some(&val) = bytes.get(0) {
+                if let Some(&val) = bytes.first() {
                     return Ok(val != 0);
                 }
             }

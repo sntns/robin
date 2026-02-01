@@ -116,10 +116,10 @@ pub async fn if_nametoindex(ifname: &str) -> Result<u32, RobinError> {
 
         if let Some(payload) = msg.get_payload() {
             let attrs = payload.rtattrs().get_attr_handle();
-            if let Ok(name) = attrs.get_attr_payload_as_with_len::<String>(Ifla::Ifname) {
-                if name == ifname {
-                    return Ok(payload.ifi_index().cast_unsigned());
-                }
+            if let Ok(name) = attrs.get_attr_payload_as_with_len::<String>(Ifla::Ifname)
+                && name == ifname
+            {
+                return Ok(payload.ifi_index().cast_unsigned());
             }
         }
     }
@@ -169,12 +169,12 @@ pub async fn if_indextoname(ifindex: u32) -> Result<String, RobinError> {
         let msg: Nlmsghdr<Rtm, Ifinfomsg> =
             msg.map_err(|_| RobinError::Netlink("Failed to parse Netlink message".to_string()))?;
 
-        if let Some(payload) = msg.get_payload() {
-            if *payload.ifi_index() == ifindex.cast_signed() {
-                let attrs = payload.rtattrs().get_attr_handle();
-                if let Ok(name) = attrs.get_attr_payload_as_with_len::<String>(Ifla::Ifname) {
-                    return Ok(name);
-                }
+        if let Some(payload) = msg.get_payload()
+            && *payload.ifi_index() == ifindex.cast_signed()
+        {
+            let attrs = payload.rtattrs().get_attr_handle();
+            if let Ok(name) = attrs.get_attr_payload_as_with_len::<String>(Ifla::Ifname) {
+                return Ok(name);
             }
         }
     }

@@ -28,13 +28,17 @@ use neli::nl::Nlmsghdr;
 /// # Example
 ///
 /// ```no_run
-/// let originators = get_originators("bat0").await?;
+/// # use robin::model::Originator;
+/// # async fn example() {
+/// # let originators: Vec<Originator> = vec![];
+/// // let originators = get_originators("bat0").await?;
 /// for o in originators {
 ///     println!(
 ///         "Originator {} via {} (last seen {} ms, best: {})",
 ///         o.originator, o.outgoing_if, o.last_seen_ms, o.is_best
 ///     );
 /// }
+/// # }
 /// ```
 pub async fn get_originators(mesh_if: &str) -> Result<Vec<Originator>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();

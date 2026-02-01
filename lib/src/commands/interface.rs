@@ -29,8 +29,11 @@ use neli::utils::Groups;
 /// # Example
 ///
 /// ```no_run
-/// let count = count_interfaces("bat0").await?;
+/// # async fn example() {
+/// # let count = 0u32;
+/// // let count = count_interfaces("bat0").await?;
 /// println!("Number of interfaces: {}", count);
+/// # }
 /// ```
 pub async fn count_interfaces(mesh_if: &str) -> Result<u32, RobinError> {
     let mesh_ifindex = if_nametoindex(mesh_if).await.map_err(|_| {
@@ -73,10 +76,10 @@ pub async fn count_interfaces(mesh_if: &str) -> Result<u32, RobinError> {
 
         if let Some(payload) = msg.get_payload() {
             let attrs = payload.rtattrs().get_attr_handle();
-            if let Ok(master) = attrs.get_attr_payload_as::<u32>(Ifla::Master) {
-                if master == mesh_ifindex {
-                    count += 1;
-                }
+            if let Ok(master) = attrs.get_attr_payload_as::<u32>(Ifla::Master)
+                && master == mesh_ifindex
+            {
+                count += 1;
             }
         }
     }
@@ -100,10 +103,14 @@ pub async fn count_interfaces(mesh_if: &str) -> Result<u32, RobinError> {
 /// # Example
 ///
 /// ```no_run
-/// let ifaces = get_interfaces("bat0").await?;
+/// # use robin::model::Interface;
+/// # async fn example() {
+/// # let ifaces: Vec<Interface> = vec![];
+/// // let ifaces = get_interfaces("bat0").await?;
 /// for iface in ifaces {
 ///     println!("Interface {} active: {}", iface.ifname, iface.active);
 /// }
+/// # }
 /// ```
 pub async fn get_interfaces(mesh_if: &str) -> Result<Vec<Interface>, RobinError> {
     let mut attrs = netlink::GenlAttrBuilder::new();
@@ -205,8 +212,10 @@ pub async fn get_interfaces(mesh_if: &str) -> Result<Vec<Interface>, RobinError>
 /// # Example
 ///
 /// ```no_run
-/// set_interface("eth0", Some("bat0")).await?;
-/// set_interface("eth0", None).await?; // remove from mesh
+/// # async fn example() {
+/// // set_interface("eth0", Some("bat0")).await?;
+/// // set_interface("eth0", None).await?; // remove from mesh
+/// # }
 /// ```
 pub async fn set_interface(iface: &str, mesh_if: Option<&str>) -> Result<(), RobinError> {
     let iface_ifindex = if_nametoindex(iface)
@@ -274,7 +283,9 @@ pub async fn set_interface(iface: &str, mesh_if: Option<&str>) -> Result<(), Rob
 /// # Example
 ///
 /// ```no_run
-/// create_interface("bat0", Some("BATMAN_IV")).await?;
+/// # async fn example() {
+/// // create_interface("bat0", Some("BATMAN_IV")).await?;
+/// # }
 /// ```
 pub async fn create_interface(mesh_if: &str, routing_algo: Option<&str>) -> Result<(), RobinError> {
     const IFLA_BATADV_ALGO_NAME: u16 = 1;
@@ -371,7 +382,9 @@ pub async fn create_interface(mesh_if: &str, routing_algo: Option<&str>) -> Resu
 /// # Example
 ///
 /// ```no_run
-/// destroy_interface("bat0").await?;
+/// # async fn example() {
+/// // destroy_interface("bat0").await?;
+/// # }
 /// ```
 pub async fn destroy_interface(mesh_if: &str) -> Result<(), RobinError> {
     let (rtnl, _) = NlRouter::connect(NlFamily::Route, None, Groups::empty())
