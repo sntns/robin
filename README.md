@@ -223,7 +223,6 @@ Please make sure to run `cargo fmt` and `cargo clippy` before submitting PRs.
 ### Related Tools
 
 - **[batctl](https://www.open-mesh.org/projects/batman-adv/wiki/Tweaking)** - The official BATMAN-adv control and management tool (C implementation)
-- **Robin (`robctl`)** - This Rust-based alternative with a modern API and CLI interface
 
 ---
 
