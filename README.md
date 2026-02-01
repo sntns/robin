@@ -1,5 +1,10 @@
 # robin
 
+[![crates.io](https://img.shields.io/crates/v/robin.svg)](https://crates.io/crates/robin)
+[![docs.rs](https://img.shields.io/docsrs/robin)](https://docs.rs/robin)
+[![CI](https://github.com/sntns/robin/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sntns/robin/actions/workflows/ci.yml)
+[![Coverage Status](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/someuser/coverage-badge.json)](https://github.com/sntns/robin)
+
 `robin` is a Rust library and CLI tool to interact with the **BATMAN-adv** kernel module, providing easy access to mesh network interfaces, neighbors, gateways, and routing algorithms.
 
 ---
@@ -20,7 +25,7 @@ Add `robin` as a dependency in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-robin = { git = "https://github.com/yourusername/robin.git" }
+robin = { git = "https://github.com/sntns/robin.git" }
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -58,7 +63,7 @@ async fn main() -> Result<(), robin::RobinError> {
 
     // Get gateway mode
     let gw_info = client.get_gw_mode(mesh_if).await?;
-    println!("Gateway mode: {:?}", gw_info.mode);
+    println!("Gateway mode: {{:?}}", gw_info.mode);
 
     // Set default routing algorithm
     client.set_default_routing_algo("BATMAN_V").await?;
@@ -134,6 +139,30 @@ robctl -m bat0 routing_algo
 
 ---
 
+## Testing
+
+To run tests:
+
+```bash
+cargo test --all
+```
+
+To check code formatting and lint:
+
+```bash
+cargo fmt -- --check
+cargo clippy -- -D warnings
+```
+
+To check coverage (requires tarpaulin):
+
+```bash
+cargo install cargo-tarpaulin
+cargo tarpaulin --out Xml
+```
+
+---
+
 ## Contributing
 
 Contributions are welcome! You can:
@@ -149,4 +178,3 @@ Please make sure to run `cargo fmt` and `cargo clippy` before submitting PRs.
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
