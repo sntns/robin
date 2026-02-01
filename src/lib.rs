@@ -16,9 +16,9 @@ mod commands;
 mod error;
 mod netlink;
 
+pub mod cli;
 pub mod client;
 pub mod model;
-pub mod cli;
 
 pub use client::RobinClient;
 pub use error::RobinError;

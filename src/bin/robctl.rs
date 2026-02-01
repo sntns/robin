@@ -1,8 +1,8 @@
 // Binary entry point for robctl
 // Uses the CLI functionality from the batman_robin crate
 
-use batman_robin::cli::*;
 use batman_robin::RobinClient;
+use batman_robin::cli::*;
 
 /// Handle a `RobinError` in a CLI-friendly way by printing the error and exiting.
 fn exit_on_error<T>(res: Result<T, batman_robin::RobinError>) -> T {
