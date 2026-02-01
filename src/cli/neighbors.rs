@@ -1,4 +1,4 @@
-use batman_robin::Neighbor;
+use crate::Neighbor;
 
 use clap::Command;
 use comfy_table::presets::UTF8_FULL;

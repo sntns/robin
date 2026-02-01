@@ -1,4 +1,4 @@
-use batman_robin::Interface;
+use crate::Interface;
 
 use clap::{Arg, Command};
 

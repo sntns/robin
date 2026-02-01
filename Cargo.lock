@@ -53,24 +53,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "batman-robin-cli"
-version = "0.1.0"
-dependencies = [
- "batman-robin-lib",
- "clap",
- "comfy-table",
- "macaddr",
- "tokio",
-]
-
-[[package]]
-name = "batman-robin-lib"
+name = "batman-robin"
 version = "0.1.0"
 dependencies = [
  "bitflags",
+ "clap",
+ "comfy-table",
  "macaddr",
  "neli",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]

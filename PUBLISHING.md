@@ -23,16 +23,12 @@ Before publishing, you need to set up a `CARGO_REGISTRY_TOKEN` secret in your Gi
 
 To publish a new release:
 
-### 1. Update Version Numbers
+### 1. Update Version Number
 
-Update the version in both `Cargo.toml` files:
+Update the version in the root `Cargo.toml`:
 
 ```toml
-# lib/Cargo.toml
-[package]
-version = "0.2.0"  # Update this
-
-# cli/Cargo.toml
+# Cargo.toml
 [package]
 version = "0.2.0"  # Update this
 ```
@@ -40,7 +36,7 @@ version = "0.2.0"  # Update this
 ### 2. Commit Changes
 
 ```bash
-git add lib/Cargo.toml cli/Cargo.toml
+git add Cargo.toml
 git commit -m "Bump version to 0.2.0"
 git push origin main
 ```
@@ -59,22 +55,36 @@ git push origin v0.2.0
 
 The GitHub Actions workflow will automatically:
 1. Create a GitHub release at https://github.com/sntns/robin/releases
-2. Publish `batman-robin-lib` to crates.io
-3. Wait for the library to be indexed on crates.io
-4. Publish `batman-robin-cli` to crates.io
+2. Publish the `batman-robin` crate to crates.io (includes both library and CLI binary)
 
 You can monitor the workflow progress at:
 https://github.com/sntns/robin/actions/workflows/release.yml
 
 ## Workflow Details
 
-The `.github/workflows/release.yml` workflow consists of three jobs:
+The `.github/workflows/release.yml` workflow consists of two jobs:
 
 1. **create-release**: Creates a GitHub release with installation instructions
-2. **publish-lib**: Publishes the library crate (`batman-robin-lib`)
-3. **publish-cli**: Publishes the CLI crate (`batman-robin-cli`) after the library is available
+2. **publish**: Publishes the unified crate to crates.io
 
-The workflow includes a wait mechanism to ensure the library is indexed on crates.io before publishing the CLI, since the CLI depends on the library.
+The crate `batman-robin` includes:
+- The library (`batman_robin`)
+- The CLI binary (`robctl`)
+
+## Installation After Publishing
+
+Users can install the crate in different ways:
+
+### As a Library Dependency
+```toml
+[dependencies]
+batman-robin = "0.2.0"
+```
+
+### As a CLI Tool
+```bash
+cargo install batman-robin
+```
 
 ## Troubleshooting
 
@@ -84,27 +94,16 @@ If the workflow fails during publishing:
 
 1. Check the GitHub Actions logs for error messages
 2. Verify the `CARGO_REGISTRY_TOKEN` secret is set correctly
-3. Ensure the version numbers are unique (not already published)
+3. Ensure the version number is unique (not already published)
 4. Make sure all Cargo.toml metadata is valid
-
-### CLI Publish Times Out
-
-If the CLI publish step times out waiting for the library:
-
-1. Check if `batman-robin-lib` was successfully published to crates.io
-2. The workflow waits up to 5 minutes (30 attempts × 10 seconds)
-3. If needed, you can manually publish the CLI:
-   ```bash
-   cargo publish --manifest-path cli/Cargo.toml
-   ```
 
 ### Version Mismatch
 
-Ensure both crates have the same version number before tagging:
+Ensure the version in `Cargo.toml` matches the git tag (without the 'v' prefix):
 
 ```bash
-# Check current versions
-grep '^version' lib/Cargo.toml cli/Cargo.toml
+# Check current version
+grep '^version' Cargo.toml
 ```
 
 ## Version Numbering

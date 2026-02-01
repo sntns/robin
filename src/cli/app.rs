@@ -1,14 +1,14 @@
-use crate::aggregation::cmd_aggregation;
-use crate::ap_isolation::cmd_ap_isolation;
-use crate::bridge_loop_avoidance::cmd_bridge_loop_avoidance;
-use crate::gateways::cmd_gateways;
-use crate::gw_mode::cmd_gw_mode;
-use crate::interface::cmd_interfaces;
-use crate::neighbors::cmd_neighbors;
-use crate::originators::cmd_originators;
-use crate::routing_algo::cmd_routing_algo;
-use crate::transglobal::cmd_transglobal;
-use crate::translocal::cmd_translocal;
+use super::aggregation::cmd_aggregation;
+use super::ap_isolation::cmd_ap_isolation;
+use super::bridge_loop_avoidance::cmd_bridge_loop_avoidance;
+use super::gateways::cmd_gateways;
+use super::gw_mode::cmd_gw_mode;
+use super::interface::cmd_interfaces;
+use super::neighbors::cmd_neighbors;
+use super::originators::cmd_originators;
+use super::routing_algo::cmd_routing_algo;
+use super::transglobal::cmd_transglobal;
+use super::translocal::cmd_translocal;
 use clap::{Arg, Command};
 
 /// Builds the command-line interface (CLI) for `robctl`.

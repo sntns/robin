@@ -1,7 +1,30 @@
-[workspace]
-resolver = "3"
+[package]
+name = "batman-robin"
+version = "0.1.0"
+edition = "2024"
+description = "Rust library and CLI tool for interacting with the BATMAN-adv kernel module for mesh networking"
+repository = "https://github.com/sntns/robin"
+license = "MIT"
+keywords = ["batman", "mesh", "networking", "netlink"]
+categories = ["network-programming", "api-bindings", "command-line-utilities"]
+readme = "README.md"
 
-members = [
-    "lib",
-    "cli",
-]
+[lib]
+name = "batman_robin"
+path = "src/lib.rs"
+
+[[bin]]
+name = "robctl"
+path = "src/bin/robctl.rs"
+
+[dependencies]
+# Library dependencies
+neli = { version = "0.7", features = ["async"] }
+thiserror = "2.0.17"
+macaddr = "1"
+bitflags = "2"
+
+# CLI dependencies
+clap = { version = "4.5.32", features = ["cargo", "derive", "env"] }
+tokio = { version = "1.48.0", features = ["rt", "rt-multi-thread", "macros"] }
+comfy-table = "7"
