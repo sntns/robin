@@ -28,3 +28,13 @@ bitflags = "2"
 clap = { version = "4.5.32", features = ["cargo", "derive", "env"] }
 tokio = { version = "1.48.0", features = ["rt", "rt-multi-thread", "macros"] }
 comfy-table = "7"
+
+[package.metadata.release]
+# cargo-release configuration
+sign-commit = false
+push = true
+publish = true
+allow-branch = ["main"]
+pre-release-commit-message = "Release {{version}}"
+tag-message = "Release {{version}}"
+tag-name = "v{{version}}"
