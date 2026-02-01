@@ -9,6 +9,26 @@
 
 ---
 
+## What are BATMAN and Robin?
+
+**BATMAN-adv** (Better Approach To Mobile Ad-hoc Networking - advanced) is a Linux kernel module that implements a Layer 2 mesh networking protocol. Operating entirely within the kernel, BATMAN-adv routes Ethernet frames rather than IP packets, making all participating nodes appear as if they're on the same local area network (LAN). This protocol-agnostic approach enables transparent support for higher layer protocols like IPv4, IPv6, DHCP, and more across multiple physical media including WiFi, Ethernet, and VPN connections.
+
+Key features of BATMAN-adv include:
+- **Decentralized mesh networking**: No central controller required; each node autonomously manages routing
+- **Layer 2 operation**: Routes Ethernet frames for protocol independence at higher layers
+- **Multi-media support**: Works with WiFi, Ethernet, VPNs, and any Layer 2 interface
+- **Dynamic topology handling**: Adapts to mobile and changing network environments
+- **Minimal overhead**: Efficient in-kernel implementation
+
+**Robin** is the companion tool that makes working with BATMAN-adv straightforward. Named after Batman's sidekick, Robin provides both a Rust library (for programmatic access) and a command-line interface (`robctl`) to manage and monitor BATMAN-adv mesh networks. With Robin, you can easily query mesh status, configure routing parameters, manage network interfaces, and monitor mesh topology—all without needing to work directly with low-level netlink APIs or kernel interfaces.
+
+For more information about BATMAN-adv:
+- [Linux Kernel BATMAN-adv Documentation](https://docs.kernel.org/networking/batman-adv.html)
+- [BATMAN-adv Wiki and Guides](https://www.open-mesh.org/doc/batman-adv/Wiki.html)
+- [BATMAN-adv GitHub Repository](https://github.com/open-mesh-mirror/batman-adv)
+
+---
+
 ## Features
 
 - Query and manage BATMAN-adv mesh interfaces
@@ -16,6 +36,22 @@
 - Enable/disable aggregation, AP isolation, and bridge loop avoidance
 - Inspect and set routing algorithms
 - Provides both a Rust API and a command-line interface (`robctl`)
+
+---
+
+## Prerequisites
+
+Before using Robin, you need to have the BATMAN-adv kernel module installed and loaded on your Linux system:
+
+```bash
+# Check if batman-adv is available
+modinfo batman-adv
+
+# Load the module
+sudo modprobe batman-adv
+```
+
+For installation instructions and system requirements, see the [BATMAN-adv installation guide](https://www.open-mesh.org/doc/batman-adv/Wiki.html).
 
 ---
 
@@ -172,6 +208,22 @@ Contributions are welcome! You can:
 - Add more examples and documentation
 
 Please make sure to run `cargo fmt` and `cargo clippy` before submitting PRs.
+
+---
+
+## Learn More
+
+### BATMAN-adv Resources
+
+- **[Official BATMAN-adv Documentation](https://docs.kernel.org/networking/batman-adv.html)** - Linux kernel documentation for the batman-adv module
+- **[BATMAN-adv Wiki](https://www.open-mesh.org/doc/batman-adv/Wiki.html)** - Comprehensive guides, tutorials, and configuration examples
+- **[open-mesh.org](https://www.open-mesh.org/)** - The B.A.T.M.A.N. advanced project homepage
+- **[BATMAN-adv GitHub](https://github.com/open-mesh-mirror/batman-adv)** - Source code and development repository
+
+### Related Tools
+
+- **[batctl](https://www.open-mesh.org/projects/batman-adv/wiki/Tweaking)** - The official BATMAN-adv control and management tool (C implementation)
+- **Robin (`robctl`)** - This Rust-based alternative with a modern API and CLI interface
 
 ---
 
