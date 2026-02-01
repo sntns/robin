@@ -13,6 +13,8 @@
 ///
 /// # Example
 /// ```
+/// use batman_robin::cli::utils::print_vid;
+///
 /// let vid: u16 = 0x8005; // bit 15 set, VLAN ID = 5
 /// assert_eq!(print_vid(vid), 5);
 ///

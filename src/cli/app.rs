@@ -38,6 +38,8 @@ use clap::{Arg, Command};
 ///
 /// # Example
 /// ```no_run
+/// use batman_robin::cli::app::build_cli;
+///
 /// let cli = build_cli();
 /// let matches = cli.get_matches();
 /// ```
