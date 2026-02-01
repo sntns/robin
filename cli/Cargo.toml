@@ -2,6 +2,12 @@
 name = "batman-robin-cli"
 version = "0.1.0"
 edition = "2024"
+description = "Command-line interface for managing BATMAN-adv mesh networks"
+repository = "https://github.com/sntns/robin"
+license = "MIT"
+keywords = ["batman", "mesh", "networking", "cli"]
+categories = ["command-line-utilities", "network-programming"]
+readme = "../README.md"
 
 [[bin]]
 name = "robctl"

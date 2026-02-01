@@ -2,6 +2,12 @@
 name = "batman-robin-lib"
 version = "0.1.0"
 edition = "2024"
+description = "Rust library for interacting with the BATMAN-adv kernel module for mesh networking"
+repository = "https://github.com/sntns/robin"
+license = "MIT"
+keywords = ["batman", "mesh", "networking", "netlink"]
+categories = ["network-programming", "api-bindings"]
+readme = "../README.md"
 
 [lib]
 name = "batman_robin"
