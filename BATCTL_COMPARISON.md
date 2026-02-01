@@ -24,9 +24,9 @@ The following batctl commands are fully implemented in Robin:
 
 | batctl Command | Robin API Method | robctl Command | Description |
 |----------------|------------------|----------------|-------------|
-| `aggregation [0\|1]` | `get_aggregation()`, `set_aggregation()` | `robctl aggregation [0\|1]` | Get/set packet aggregation |
-| `ap_isolation [0\|1]` | `get_ap_isolation()`, `set_ap_isolation()` | `robctl ap_isolation [0\|1]` | Get/set AP isolation |
-| `bridge_loop_avoidance [0\|1]` | `get_bridge_loop_avoidance()`, `set_bridge_loop_avoidance()` | `robctl bridge_loop_avoidance [0\|1]` | Get/set bridge loop avoidance |
+| `aggregation [0\\|1]` | `get_aggregation()`, `set_aggregation()` | `robctl aggregation [0\\|1]` | Get/set packet aggregation |
+| `ap_isolation [0\\|1]` | `get_ap_isolation()`, `set_ap_isolation()` | `robctl ap_isolation [0\\|1]` | Get/set AP isolation |
+| `bridge_loop_avoidance [0\\|1]` | `get_bridge_loop_avoidance()`, `set_bridge_loop_avoidance()` | `robctl bridge_loop_avoidance [0\\|1]` | Get/set bridge loop avoidance |
 
 ### Routing Algorithm Management
 
@@ -70,11 +70,11 @@ The following batctl features are **not yet implemented** in Robin:
 | batctl Command | Description | Priority |
 |----------------|-------------|----------|
 | `orig_interval [ms]` | Set originator message interval | Medium |
-| `distributed_arp_table [0\|1]` | Enable/disable DAT (Distributed ARP Table) | Medium |
-| `bonding [0\|1]` | Enable/disable bonding mode | Medium |
-| `fragmentation [0\|1]` | Enable/disable fragmentation | Medium |
-| `multicast_mode [0\|1]` | Enable/disable optimized multicast forwarding | Medium |
-| `network_coding [0\|1]` | Enable/disable network coding | Low |
+| `distributed_arp_table [0\\|1]` | Enable/disable DAT (Distributed ARP Table) | Medium |
+| `bonding [0\\|1]` | Enable/disable bonding mode | Medium |
+| `fragmentation [0\\|1]` | Enable/disable fragmentation | Medium |
+| `multicast_mode [0\\|1]` | Enable/disable optimized multicast forwarding | Medium |
+| `network_coding [0\\|1]` | Enable/disable network coding | Low |
 | `hop_penalty [penalty]` | Set hop penalty | Low |
 | `isolation_mark [mark]` | Set isolation mark | Low |
 
@@ -82,11 +82,11 @@ The following batctl features are **not yet implemented** in Robin:
 
 | batctl Command | Description | Priority |
 |----------------|-------------|----------|
-| `ping <MAC\|host>` | Layer-2 batman ping | High |
-| `traceroute <MAC\|host>` | Layer-2 traceroute | High |
+| `ping <MAC\\|host>` | Layer-2 batman ping | High |
+| `traceroute <MAC\\|host>` | Layer-2 traceroute | High |
 | `tcpdump` | Print batman-adv frames | Medium |
-| `throughputmeter <MAC\|host>` | Measure throughput to peer | Medium |
-| `event [-t\|-r]` | Show batman-adv kernel events | Medium |
+| `throughputmeter <MAC\\|host>` | Measure throughput to peer | Medium |
+| `event [-t\\|-r]` | Show batman-adv kernel events | Medium |
 
 ### Debug Tables
 
