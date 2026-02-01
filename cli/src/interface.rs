@@ -1,4 +1,4 @@
-use robin::Interface;
+use batman_robin::Interface;
 
 use clap::{Arg, Command};
 

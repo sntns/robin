@@ -1,11 +1,11 @@
-# robin
+# batman-robin
 
-[![crates.io](https://img.shields.io/crates/v/robin.svg)](https://crates.io/crates/robin)
-[![docs.rs](https://img.shields.io/docsrs/robin)](https://docs.rs/robin)
+[![crates.io](https://img.shields.io/crates/v/batman-robin.svg)](https://crates.io/crates/batman-robin)
+[![docs.rs](https://img.shields.io/docsrs/batman-robin)](https://docs.rs/batman-robin)
 [![CI](https://github.com/sntns/robin/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sntns/robin/actions/workflows/ci.yml)
 [![Coverage Status](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/someuser/coverage-badge.json)](https://github.com/sntns/robin)
 
-`robin` is a Rust library and CLI tool to interact with the **BATMAN-adv** kernel module, providing easy access to mesh network interfaces, neighbors, gateways, and routing algorithms.
+`batman-robin` is a Rust library and CLI tool to interact with the **BATMAN-adv** kernel module, providing easy access to mesh network interfaces, neighbors, gateways, and routing algorithms.
 
 ---
 
@@ -20,7 +20,7 @@ Key features of BATMAN-adv include:
 - **Dynamic topology handling**: Adapts to mobile and changing network environments
 - **Minimal overhead**: Efficient in-kernel implementation
 
-**Robin** is the companion tool that makes working with BATMAN-adv straightforward. Named after Batman's sidekick, Robin provides both a Rust library (for programmatic access) and a command-line interface (`robctl`) to manage and monitor BATMAN-adv mesh networks. With Robin, you can easily query mesh status, configure routing parameters, manage network interfaces, and monitor mesh topology—all without needing to work directly with low-level netlink APIs or kernel interfaces.
+**Robin** is the companion tool that makes working with BATMAN-adv straightforward. Named after Batman's sidekick, `batman-robin` provides both a Rust library (for programmatic access) and a command-line interface (`robctl`) to manage and monitor BATMAN-adv mesh networks. With Robin, you can easily query mesh status, configure routing parameters, manage network interfaces, and monitor mesh topology—all without needing to work directly with low-level netlink APIs or kernel interfaces.
 
 For more information about BATMAN-adv:
 - [Linux Kernel BATMAN-adv Documentation](https://docs.kernel.org/networking/batman-adv.html)
@@ -57,11 +57,11 @@ For installation instructions and system requirements, see the [BATMAN-adv insta
 
 ## Installation
 
-Add `robin` as a dependency in your `Cargo.toml`:
+Add `batman-robin` as a dependency in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-robin = { git = "https://github.com/sntns/robin.git" }
+batman-robin = { git = "https://github.com/sntns/robin.git" }
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -78,11 +78,11 @@ This will install the `robctl` CLI tool.
 ## Rust API Usage
 
 ```rust
-use robin::{RobinClient, GwMode};
+use batman_robin::{RobinClient, GwMode};
 use tokio;
 
 #[tokio::main]
-async fn main() -> Result<(), robin::RobinError> {
+async fn main() -> Result<(), batman_robin::RobinError> {
     let client = RobinClient::new();
 
     // Get default mesh interface

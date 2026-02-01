@@ -1,4 +1,4 @@
-use robin::Gateway;
+use batman_robin::Gateway;
 
 use clap::Command;
 use comfy_table::presets::UTF8_FULL;

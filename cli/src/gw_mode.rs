@@ -1,4 +1,4 @@
-use robin::{GatewayInfo, GwMode, RobinError};
+use batman_robin::{GatewayInfo, GwMode, RobinError};
 
 use clap::{Arg, Command};
 

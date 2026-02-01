@@ -1,4 +1,4 @@
-use robin::Originator;
+use batman_robin::Originator;
 
 use clap::Command;
 use comfy_table::presets::UTF8_FULL;

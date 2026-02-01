@@ -26,7 +26,7 @@ use neli::nl::{NlPayload, Nlmsghdr};
 /// # Example
 ///
 /// ```no_run
-/// # use robin::model::Gateway;
+/// # use batman_robin::model::Gateway;
 /// # async fn example() {
 /// # let gateways: Vec<Gateway> = vec![];
 /// // let gateways = get_gateways_list("bat0").await?;
