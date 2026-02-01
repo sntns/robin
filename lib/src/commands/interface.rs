@@ -103,7 +103,7 @@ pub async fn count_interfaces(mesh_if: &str) -> Result<u32, RobinError> {
 /// # Example
 ///
 /// ```no_run
-/// # use robin::model::Interface;
+/// # use batman_robin::model::Interface;
 /// # async fn example() {
 /// # let ifaces: Vec<Interface> = vec![];
 /// // let ifaces = get_interfaces("bat0").await?;

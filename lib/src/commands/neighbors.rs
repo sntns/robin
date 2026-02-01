@@ -25,7 +25,7 @@ use neli::nl::{NlPayload, Nlmsghdr};
 /// # Example
 ///
 /// ```no_run
-/// # use robin::model::Neighbor;
+/// # use batman_robin::model::Neighbor;
 /// # async fn example() {
 /// # let neighbors: Vec<Neighbor> = vec![];
 /// // let neighbors = get_neighbors("bat0").await?;

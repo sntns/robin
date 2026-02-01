@@ -37,7 +37,7 @@ mod utils;
 /// # Notes
 /// This function never returns on error (`std::process::exit`), which makes it
 /// suitable only for top-level CLI code and **not** for libraries.
-fn exit_on_error<T>(res: Result<T, robin::RobinError>) -> T {
+fn exit_on_error<T>(res: Result<T, batman_robin::RobinError>) -> T {
     match res {
         Ok(v) => v,
         Err(e) => {
@@ -91,7 +91,7 @@ fn exit_on_error<T>(res: Result<T, robin::RobinError>) -> T {
 /// ```
 #[tokio::main]
 async fn main() {
-    let client = robin::RobinClient::new();
+    let client = batman_robin::RobinClient::new();
     let matches = app::build_cli().get_matches();
     let mesh_if = matches
         .get_one::<String>("meshif")
@@ -128,9 +128,9 @@ async fn main() {
             }
 
             let mode = match mode_str.unwrap() {
-                "off" => robin::GwMode::Off,
-                "client" => robin::GwMode::Client,
-                "server" => robin::GwMode::Server,
+                "off" => batman_robin::GwMode::Off,
+                "client" => batman_robin::GwMode::Client,
+                "server" => batman_robin::GwMode::Server,
                 other => {
                     eprintln!("Invalid mode: {}", other);
                     return;

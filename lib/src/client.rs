@@ -12,8 +12,8 @@ use crate::model;
 /// # Example
 ///
 /// ```no_run
-/// use robin::RobinClient;
-/// # async fn example() -> Result<(), robin::RobinError> {
+/// use batman_robin::RobinClient;
+/// # async fn example() -> Result<(), batman_robin::RobinError> {
 /// let client = RobinClient::new();
 /// let mesh_if = "bat0";
 ///
@@ -42,7 +42,7 @@ impl RobinClient {
     /// # Example
     ///
     /// ```
-    /// use robin::RobinClient;
+    /// use batman_robin::RobinClient;
     /// let client = RobinClient::new();
     /// ```
     pub fn new() -> Self {
@@ -57,8 +57,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let idx = client.if_nametoindex("bat0").await?;
     /// println!("Interface index: {}", idx);
@@ -77,8 +77,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let ifname = client.if_indextoname(3).await?;
     /// println!("Interface name: {}", ifname);
@@ -94,8 +94,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let originators = client.originators("bat0").await?;
     /// for o in originators {
@@ -113,8 +113,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let gateways = client.gateways("bat0").await?;
     /// for g in gateways {
@@ -132,8 +132,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let gw_info = client.get_gw_mode("bat0").await?;
     /// println!("Gateway mode: {:?}", gw_info.mode);
@@ -156,9 +156,9 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// use robin::GwMode;
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// use batman_robin::GwMode;
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// client.set_gw_mode(GwMode::Server, Some(50000), Some(10000), None, "bat0").await?;
     /// # Ok(())
@@ -180,8 +180,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let tg = client.transglobal("bat0").await?;
     /// for entry in tg {
@@ -202,8 +202,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let tl = client.translocal("bat0").await?;
     /// for entry in tl {
@@ -224,8 +224,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let neighbors = client.neighbors("bat0").await?;
     /// for n in neighbors {
@@ -243,8 +243,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let interfaces = client.get_interface("bat0").await?;
     /// for iface in interfaces {
@@ -266,8 +266,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// client.set_interface("wlan1", Some("bat0")).await?;
     /// client.set_interface("wlan1", None).await?;
@@ -287,8 +287,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// client.create_interface("bat0", Some("BATMAN_V")).await?;
     /// client.create_interface("bat1", None).await?;
@@ -308,8 +308,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// client.destroy_interface("bat0").await?;
     /// # Ok(())
@@ -324,8 +324,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let count = client.count_interfaces("bat0").await?;
     /// println!("Attached interfaces: {}", count);
@@ -347,8 +347,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let enabled = client.get_aggregation("bat0").await?;
     /// println!("Aggregation enabled? {}", enabled);
@@ -368,8 +368,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// // Enable aggregation
     /// client.set_aggregation("bat0", true).await?;
@@ -394,8 +394,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let isolated = client.get_ap_isolation("bat0").await?;
     /// println!("AP isolation enabled? {}", isolated);
@@ -415,8 +415,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// client.set_ap_isolation("bat0", true).await?; // enable
     /// client.set_ap_isolation("bat0", false).await?; // disable
@@ -438,8 +438,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let enabled = client.get_bridge_loop_avoidance("bat0").await?;
     /// println!("Bridge loop avoidance: {}", enabled);
@@ -459,8 +459,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// client.set_bridge_loop_avoidance("bat0", true).await?; // enable
     /// client.set_bridge_loop_avoidance("bat0", false).await?; // disable
@@ -480,8 +480,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let default_algo = client.get_default_routing_algo().await?;
     /// println!("Default routing algorithm: {}", default_algo);
@@ -500,8 +500,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let active_algos = client.get_active_routing_algos().await?;
     /// for (iface, algo) in active_algos {
@@ -519,8 +519,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// let available = client.get_available_routing_algos().await?;
     /// println!("Available routing algorithms:");
@@ -539,8 +539,8 @@ impl RobinClient {
     /// # Example
     ///
     /// ```no_run
-    /// # use robin::RobinClient;
-    /// # async fn example() -> Result<(), robin::RobinError> {
+    /// # use batman_robin::RobinClient;
+    /// # async fn example() -> Result<(), batman_robin::RobinError> {
     /// # let client = RobinClient::new();
     /// client.set_default_routing_algo("BATMAN_V").await?;
     /// # Ok(())

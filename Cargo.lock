@@ -53,6 +53,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "batman-robin-cli"
+version = "0.1.0"
+dependencies = [
+ "batman-robin-lib",
+ "clap",
+ "comfy-table",
+ "macaddr",
+ "tokio",
+]
+
+[[package]]
+name = "batman-robin-lib"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "macaddr",
+ "neli",
+ "thiserror",
+]
+
+[[package]]
 name = "bitflags"
 version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -445,27 +466,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed2bf2547551a7053d6fdfafda3f938979645c44812fbfcda098faae3f1a362d"
 dependencies = [
  "bitflags",
-]
-
-[[package]]
-name = "robin-cli"
-version = "0.1.0"
-dependencies = [
- "clap",
- "comfy-table",
- "macaddr",
- "robin-lib",
- "tokio",
-]
-
-[[package]]
-name = "robin-lib"
-version = "0.1.0"
-dependencies = [
- "bitflags",
- "macaddr",
- "neli",
- "thiserror",
 ]
 
 [[package]]

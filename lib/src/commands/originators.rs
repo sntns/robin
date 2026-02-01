@@ -28,7 +28,7 @@ use neli::nl::Nlmsghdr;
 /// # Example
 ///
 /// ```no_run
-/// # use robin::model::Originator;
+/// # use batman_robin::model::Originator;
 /// # async fn example() {
 /// # let originators: Vec<Originator> = vec![];
 /// // let originators = get_originators("bat0").await?;

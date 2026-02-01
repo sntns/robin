@@ -1,4 +1,4 @@
-//! # Robin Library
+//! # Batman-Robin Library
 //!
 //! This crate provides a Rust interface to **batman-adv** mesh networking, exposing
 //! both low-level netlink operations and a high-level `RobinClient` for CLI or programmatic use.
