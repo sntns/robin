@@ -10,7 +10,7 @@ Robin is a Rust library and CLI tool for interacting with the BATMAN-adv kernel 
 ## Tech Stack
 
 - **Language**: Rust Edition 2024
-- **Core Dependencies**:
+- **Core Dependencies** (refer to `Cargo.toml` files for exact versions):
   - `neli` (0.7) - Netlink protocol handling with async support
   - `tokio` (1.48) - Async runtime for I/O operations
   - `thiserror` (2.0) - Error handling
