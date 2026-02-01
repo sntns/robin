@@ -1,6 +1,6 @@
-use crate::utils::print_vid;
-use batman_robin::TranslocalEntry;
-use batman_robin::model::ClientFlags;
+use super::utils::print_vid;
+use crate::TranslocalEntry;
+use crate::model::ClientFlags;
 
 use clap::Command;
 use comfy_table::presets::UTF8_FULL;

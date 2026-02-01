@@ -10,11 +10,13 @@
 //! - `netlink` - Low-level wrappers around netlink sockets, generic netlink messages, and attribute builders.
 //! - `client` - High-level API providing the `RobinClient` struct for interacting with mesh networks.
 //! - `model` - Data structures representing interfaces, neighbors, originators, gateways, translation tables, etc.
+//! - `cli` - Command-line interface modules (only included when building the binary).
 
 mod commands;
 mod error;
 mod netlink;
 
+pub mod cli;
 pub mod client;
 pub mod model;
 

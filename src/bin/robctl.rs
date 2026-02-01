@@ -1,42 +1,10 @@
-mod aggregation;
-mod ap_isolation;
-mod app;
-mod bridge_loop_avoidance;
-mod gateways;
-mod gw_mode;
-mod interface;
-mod neighbors;
-mod originators;
-mod routing_algo;
-mod transglobal;
-mod translocal;
-mod utils;
+// Binary entry point for robctl
+// Uses the CLI functionality from the batman_robin crate
+
+use batman_robin::RobinClient;
+use batman_robin::cli::*;
 
 /// Handle a `RobinError` in a CLI-friendly way by printing the error and exiting.
-///
-/// This helper is intended for use in the `robctl` CLI `main` function to avoid
-/// propagating errors or panicking with `unwrap()`.
-///
-/// # Behavior
-/// - If `res` is `Ok`, the contained value is returned.
-/// - If `res` is `Err`, the error is printed to `stderr` and the process exits
-///   immediately with exit code `1`.
-///
-/// # Rationale
-/// CLI tools should never panic on user-facing errors. This function centralizes
-/// error handling so that all failures:
-/// - produce a clean, human-readable error message
-/// - do not display a Rust backtrace
-/// - return a non-zero exit code, like standard Unix tools (e.g. `batctl`)
-///
-/// # Example
-/// ```no_run
-/// let entries = exit_on_error(client.neighbors(mesh_if).await);
-/// ```
-///
-/// # Notes
-/// This function never returns on error (`std::process::exit`), which makes it
-/// suitable only for top-level CLI code and **not** for libraries.
 fn exit_on_error<T>(res: Result<T, batman_robin::RobinError>) -> T {
     match res {
         Ok(v) => v,
@@ -47,51 +15,9 @@ fn exit_on_error<T>(res: Result<T, batman_robin::RobinError>) -> T {
     }
 }
 
-/// Main entry point for the `robctl` CLI application.
-///
-/// This function initializes the `RobinClient`, parses command-line arguments using `clap`,
-/// and dispatches subcommands to their corresponding handlers. It supports both
-/// display and modification of batman-adv mesh network settings.
-///
-/// # Global Options
-/// - `--meshif`, `-m` : Batman-adv mesh interface to operate on (default: `bat0`).
-/// - `--version`, `-v` : Print `robctl` version and batman-adv kernel module version.
-///
-/// # Subcommands
-/// - `neighbors` (`n`) : Display the neighbor table.
-/// - `gateways` (`gwl`) : Display the list of gateways.
-/// - `gw_mode` (`gw`) : Display or modify the gateway mode. Accepts `off`, `client`, or `server`.
-/// - `originators` (`o`) : Display the originator table.
-/// - `translocal` (`tl`) : Display local translation table.
-/// - `transglobal` (`tg`) : Display global translation table.
-/// - `interface` (`if`) : Display or modify batman-adv interface settings. Supports `add`, `del`, `create`, and `destroy`.
-/// - `aggregation` (`ag`) : Display or modify aggregation setting (0 = disable, 1 = enable).
-/// - `ap_isolation` (`ap`) : Display or modify AP isolation setting (0 = disable, 1 = enable).
-/// - `bridge_loop_avoidance` (`bl`) : Display or modify bridge loop avoidance setting (0 = disable, 1 = enable).
-/// - `routing_algo` (`ra`) : Display or modify the routing algorithm.
-///
-/// # Behavior
-/// 1. If the `--version` flag is set, prints the `robctl` version and default routing algorithm, then exits.
-/// 2. Subcommands are dispatched asynchronously via the `RobinClient`.
-/// 3. For modification commands (e.g., `gw_mode`, `aggregation`, `ap_isolation`), values are parsed and sent to the mesh interface.
-/// 4. For display commands (e.g., `neighbors`, `originators`), tables are printed using `comfy_table`.
-/// 5. Interface commands handle automatic creation/destruction unless the `-M` flag is set.
-///
-/// # Panics
-/// The function uses `.unwrap()` extensively for simplicity; in a production application,
-/// proper error handling should replace unwraps to avoid panics.
-///
-/// # Example
-/// ```no_run
-/// // Display neighbors on the default interface:
-/// robctl neighbors
-///
-/// // Set gateway mode to client on interface bat0:
-/// robctl gw_mode client 50
-/// ```
 #[tokio::main]
 async fn main() {
-    let client = batman_robin::RobinClient::new();
+    let client = RobinClient::new();
     let matches = app::build_cli().get_matches();
     let mesh_if = matches
         .get_one::<String>("meshif")
